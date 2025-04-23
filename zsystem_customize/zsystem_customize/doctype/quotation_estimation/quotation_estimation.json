@@ -1,0 +1,146 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-02-04 14:48:49.870472",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_gunu",
+  "naming_series",
+  "customer",
+  "customer_name",
+  "column_break_qzog",
+  "date",
+  "amended_from",
+  "section_break_wynj",
+  "table_buva",
+  "total_section",
+  "overall_total_lp",
+  "column_break_khxm",
+  "overall_total_kp",
+  "column_break_nyyq",
+  "overall_total_price"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_gunu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Quotation Estimation",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "customer.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Customer Name",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "table_buva",
+   "fieldtype": "Table",
+   "label": "Item",
+   "options": "Quotation Estimation Child Table"
+  },
+  {
+   "fieldname": "column_break_qzog",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_wynj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "total_section",
+   "fieldtype": "Section Break",
+   "label": "Total"
+  },
+  {
+   "fieldname": "overall_total_lp",
+   "fieldtype": "Currency",
+   "label": "Overall Total LP",
+   "read_only": 1
+  },
+  {
+   "fieldname": "overall_total_kp",
+   "fieldtype": "Currency",
+   "label": "Overall Total KP",
+   "read_only": 1
+  },
+  {
+   "fieldname": "overall_total_price",
+   "fieldtype": "Currency",
+   "label": "Overall Total Price",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_khxm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_nyyq",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-02-18 16:06:39.479287",
+ "modified_by": "Administrator",
+ "module": "Zsystem Customize",
+ "name": "Quotation Estimation",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
