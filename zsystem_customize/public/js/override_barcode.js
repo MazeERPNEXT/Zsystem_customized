@@ -118,7 +118,7 @@ zsystem_customize.utils.BarcodeScanner = class CustomBarcodeScanner extends erpn
 		
 				// Update quantity
 				existing_row.qty = flt(existing_row.qty || 0) + 1;
-		
+				existing_row.received_qty = flt(existing_row.received_qty || 0) + 1;
 				// Refresh UI
 				if (cur_grid) cur_grid.refresh();
 				this.frm.refresh_field(this.items_table_name);

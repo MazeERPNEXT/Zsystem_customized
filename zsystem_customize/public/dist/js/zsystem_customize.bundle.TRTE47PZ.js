@@ -63,6 +63,7 @@
         current_serials.push(new_serial);
         existing_row.serial_no = current_serials.join("\n");
         existing_row.qty = flt(existing_row.qty || 0) + 1;
+        existing_row.received_qty = flt(existing_row.received_qty || 0) + 1;
         if (cur_grid)
           cur_grid.refresh();
         this.frm.refresh_field(this.items_table_name);
@@ -169,4 +170,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.FRFYG7NL.js.map
+//# sourceMappingURL=zsystem_customize.bundle.TRTE47PZ.js.map
