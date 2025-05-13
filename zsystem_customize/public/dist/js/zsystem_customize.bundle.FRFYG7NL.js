@@ -21,9 +21,9 @@
         console.log("Original:", parts);
         if (item_code) {
           item_code = item_code.replace(/^1P/, "").replace(/-/g, "").replace(/\s+/g, "");
-          console.log("1P (20 chars):", item_code);
+          console.log("Part Number (Item Code):", item_code);
         } else {
-          console.log("No valid 1P+20 found.");
+          console.log("No valid 1P Part Number  found.");
         }
         if (serial_no) {
           console.log("S (10 chars):", serial_no);
@@ -150,7 +150,7 @@
       item_code_field.df.onchange = async () => {
         let item_code = this.dialog.get_value("item_code");
         if (item_code) {
-          let updated_code = item_code.replace(/^1P/i, "").replace(/\$$/, "").replace(/-/g, "");
+          let updated_code = item_code.replace(/^1P/i, "").replace(/\$$/, "").replace(/-/g, "").replace(/\|/g, "");
           this.dialog.set_value("item_code", updated_code);
         }
       };
@@ -163,10 +163,10 @@
     barcode: function(frm, cdt, cdn) {
       let row = locals[cdt][cdn];
       if (row.barcode) {
-        let cleaned = row.barcode.replace(/^1P/i, "").replace(/\$$/, "").replace(/-/g, "");
+        let cleaned = row.barcode.replace(/^1P/i, "").replace(/\$$/, "").replace(/-/g, "").replace(/\|/g, "");
         frappe.model.set_value(cdt, cdn, "barcode", cleaned);
       }
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.MI2YIBID.js.map
+//# sourceMappingURL=zsystem_customize.bundle.FRFYG7NL.js.map
