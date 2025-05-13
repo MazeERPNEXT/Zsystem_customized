@@ -13,7 +13,7 @@ class ItemQuickEntryForm extends frappe.ui.form.QuickEntryForm {
     
             // Ensure item_code exists before replacing
             if (item_code) {
-                let updated_code = item_code.replace(/^1P/i, '').replace(/\$$/, '');
+                let updated_code = item_code.replace(/^1P/i, '').replace(/\$$/, '').replace(/-/g,'');
                 
                 // Set the updated value back to the field
                 this.dialog.set_value("item_code", updated_code);
