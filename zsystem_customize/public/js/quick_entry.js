@@ -9,16 +9,24 @@ class ItemQuickEntryForm extends frappe.ui.form.QuickEntryForm {
         let item_code_field = this.dialog.fields_dict.item_code;
         
         item_code_field.df.onchange = async () => {
-            let item_code = this.dialog.get_value("item_code");
-    
-            // Ensure item_code exists before replacing
-            if (item_code) {
-                let updated_code = item_code.replace(/^1P/i, '').replace(/\$$/, '').replace(/-/g,'').replace(/\|/g, '');
-                
-                // Set the updated value back to the field
-                this.dialog.set_value("item_code", updated_code);
-            }
-        };
+    let input = this.dialog.get_value("item_code");
+
+    if (input) {
+        // Find the part that starts with '1P'
+        let parts = input.split('|').map(p => p.trim());
+        let raw_item_code = parts.find(p => p.startsWith("1P"));
+
+        if (raw_item_code) {
+            let cleaned_code = raw_item_code
+                .replace(/^1P/i, '')     // Remove '1P' prefix
+                .replace(/\$/g, '')      // Remove any '$'
+                .replace(/[-|]/g, '')    // Remove '-' and '|'
+                .trim();                 // Trim whitespace
+
+            this.dialog.set_value("item_code", cleaned_code);
+        }
+    }
+};
     }
     
 }

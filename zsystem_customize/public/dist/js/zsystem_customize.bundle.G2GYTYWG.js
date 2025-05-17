@@ -4,54 +4,55 @@
   frappe.provide("zsystem_customize.utils");
   zsystem_customize.utils.BarcodeScanner = class CustomBarcodeScanner extends erpnext.utils.BarcodeScanner {
     scan_api_call(input, callback) {
-      var _a, _b;
-      function removeStartAndEnd(custom_input) {
-        let item_input = custom_input.trim();
-        let parts = item_input.split("|");
+      var _a, _b, _c;
+      function parseInput(custom_input) {
+        let trimmedInput = custom_input.trim();
+        let parts = trimmedInput.split("|");
         let item_code = null;
         let serial_no = null;
         parts.forEach((part) => {
           part = part.trim();
           if (part.startsWith("1P")) {
             item_code = part;
-          } else if (part.startsWith("S")) {
+          } else if (/^S/.test(part)) {
             serial_no = part;
           }
         });
-        console.log("Original:", parts);
+        console.log("Original parts:", parts);
         if (item_code) {
           item_code = item_code.replace(/^1P/, "").replace(/-/g, "").replace(/\s+/g, "");
-          console.log("Part Number (Item Code):", item_code);
+          console.log("Parsed Item Code:", item_code);
         } else {
-          console.log("No valid 1P Part Number  found.");
+          console.log("No valid '1P' Part Number found.");
         }
         if (serial_no) {
-          console.log("S (10 chars):", serial_no);
+          console.log("Serial Number:", serial_no);
         } else {
-          console.log("No valid S+10 found.");
+          console.log("No valid serial number starting with 'S' found.");
         }
         if (!item_code || !serial_no) {
           return null;
         }
         return { item_code, serial_no };
       }
-      const result = removeStartAndEnd(input);
+      const result = parseInput(input);
       if (!result) {
-        frappe.msgprint("Invalid scan: Must include '1P' (20 chars) and 'SC-' (10 chars).");
+        frappe.msgprint("Invalid scan: Must include both 'Part Number' and 'Serial Number'.");
         return;
       }
-      let cur_grid = this.frm.fields_dict[this.items_table_name].grid;
+      const cur_grid = (_a = this.frm.fields_dict[this.items_table_name]) == null ? void 0 : _a.grid;
       let existing_row = null;
-      for (let row of cur_grid.grid_rows) {
-        let doc = row.doc;
-        if (doc.item_code === result.item_code) {
-          existing_row = doc;
-          break;
+      if (cur_grid) {
+        for (let row of cur_grid.grid_rows) {
+          if (row.doc.item_code === result.item_code) {
+            existing_row = row.doc;
+            break;
+          }
         }
       }
       if (existing_row) {
         let current_serials = existing_row.serial_no ? existing_row.serial_no.split("\n").map((s) => s.trim()).filter(Boolean) : [];
-        let new_serial = result.serial_no ? result.serial_no.trim() : "";
+        const new_serial = result.serial_no.trim();
         if (!new_serial) {
           frappe.msgprint(__("Invalid serial number."));
           return;
@@ -64,12 +65,11 @@
         existing_row.serial_no = current_serials.join("\n");
         existing_row.qty = flt(existing_row.qty || 0) + 1;
         existing_row.received_qty = flt(existing_row.received_qty || 0) + 1;
-        if (cur_grid)
-          cur_grid.refresh();
+        cur_grid.refresh();
         this.frm.refresh_field(this.items_table_name);
-        frappe.msgprint(__("Updated Serial Numbers:<br><pre>{0}</pre>", [existing_row.serial_no]));
-        (_a = this.show_scan_message) == null ? void 0 : _a.call(this, existing_row.idx, result.item_code, existing_row.qty);
-        (_b = this.clean_up) == null ? void 0 : _b.call(this);
+        this.show_alert(__("Updated Serial Numbers:<br><pre>{0}</pre>", [existing_row.serial_no]));
+        (_b = this.show_scan_message) == null ? void 0 : _b.call(this, existing_row.idx, result.item_code, existing_row.qty);
+        (_c = this.clean_up) == null ? void 0 : _c.call(this);
         return;
       }
       frappe.call({
@@ -84,7 +84,7 @@
           callback(r);
         }
       }).catch((err) => {
-        console.log("Scan failed:", err);
+        console.error("Scan failed:", err);
         frappe.msgprint("Error in scanning: " + err.message);
       });
     }
@@ -149,10 +149,14 @@
     remove_car() {
       let item_code_field = this.dialog.fields_dict.item_code;
       item_code_field.df.onchange = async () => {
-        let item_code = this.dialog.get_value("item_code");
-        if (item_code) {
-          let updated_code = item_code.replace(/^1P/i, "").replace(/\$$/, "").replace(/-/g, "").replace(/\|/g, "");
-          this.dialog.set_value("item_code", updated_code);
+        let input = this.dialog.get_value("item_code");
+        if (input) {
+          let parts = input.split("|").map((p) => p.trim());
+          let raw_item_code = parts.find((p) => p.startsWith("1P"));
+          if (raw_item_code) {
+            let cleaned_code = raw_item_code.replace(/^1P/i, "").replace(/\$/g, "").replace(/[-|]/g, "").trim();
+            this.dialog.set_value("item_code", cleaned_code);
+          }
         }
       };
     }
@@ -170,4 +174,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.TRTE47PZ.js.map
+//# sourceMappingURL=zsystem_customize.bundle.G2GYTYWG.js.map
