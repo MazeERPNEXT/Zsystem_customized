@@ -141,12 +141,13 @@
   }
 
   // ../zsystem_customize/zsystem_customize/public/js/quick_entry.js
+  frappe.provide("frappe.ui.form");
   var ItemQuickEntryForm = class extends frappe.ui.form.QuickEntryForm {
     render_dialog() {
       super.render_dialog();
-      this.remove_car();
+      this.setup_custom_onchange();
     }
-    remove_car() {
+    setup_custom_onchange() {
       let item_code_field = this.dialog.fields_dict.item_code;
       item_code_field.df.onchange = async () => {
         let input = this.dialog.get_value("item_code");
@@ -174,4 +175,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.G2GYTYWG.js.map
+//# sourceMappingURL=zsystem_customize.bundle.BUBQ25XE.js.map
