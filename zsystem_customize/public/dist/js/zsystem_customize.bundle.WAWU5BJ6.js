@@ -37,7 +37,7 @@
       }
       const result = parseInput(input);
       if (!result) {
-        frappe.msgprint("Invalid scan: Must include both 'Part Number' and 'Serial Number'.");
+        this.show_alert("Invalid scan: Must include both 'Part Number' and 'Serial Number'.");
         return;
       }
       const cur_grid = (_a = this.frm.fields_dict[this.items_table_name]) == null ? void 0 : _a.grid;
@@ -54,11 +54,11 @@
         let current_serials = existing_row.serial_no ? existing_row.serial_no.split("\n").map((s) => s.trim()).filter(Boolean) : [];
         const new_serial = result.serial_no.trim();
         if (!new_serial) {
-          frappe.msgprint(__("Invalid serial number."));
+          this.show_alert(__("Invalid serial number."));
           return;
         }
         if (current_serials.includes(new_serial)) {
-          frappe.msgprint(__("This serial number is already added for item {0}.", [result.item_code]));
+          this.show_alert(__("This serial number is already added for item {0}.", [result.item_code]));
           return;
         }
         current_serials.push(new_serial);
@@ -78,14 +78,14 @@
       }).then((r) => {
         var _a2;
         if ((_a2 = r.message) == null ? void 0 : _a2.error) {
-          frappe.msgprint(r.message.error);
+          this.show_alert(r.message.error);
         } else {
           r.message.serial_no = result.serial_no;
           callback(r);
         }
       }).catch((err) => {
         console.error("Scan failed:", err);
-        frappe.msgprint("Error in scanning: " + err.message);
+        this.show_alert("Error in scanning: " + err.message);
       });
     }
     update_table(data) {
@@ -206,4 +206,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.GQZSQBNV.js.map
+//# sourceMappingURL=zsystem_customize.bundle.WAWU5BJ6.js.map

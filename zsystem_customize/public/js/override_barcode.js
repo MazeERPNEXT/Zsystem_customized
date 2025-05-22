@@ -46,7 +46,7 @@ zsystem_customize.utils.BarcodeScanner = class CustomBarcodeScanner extends erpn
     // Parse and validate input
     const result = parseInput(input);
     if (!result) {
-        frappe.msgprint("Invalid scan: Must include both 'Part Number' and 'Serial Number'.");
+        this.show_alert("Invalid scan: Must include both 'Part Number' and 'Serial Number'.");
         return;
     }
 
@@ -73,13 +73,13 @@ zsystem_customize.utils.BarcodeScanner = class CustomBarcodeScanner extends erpn
         const new_serial = result.serial_no.trim();
 
         if (!new_serial) {
-            frappe.msgprint(__("Invalid serial number."));
+            this.show_alert(__("Invalid serial number."));
             return;
         }
 
         // Check for duplicate serial number
         if (current_serials.includes(new_serial)) {
-            frappe.msgprint(__("This serial number is already added for item {0}.", [result.item_code]));
+            this.show_alert(__("This serial number is already added for item {0}.", [result.item_code]));
             return;
         }
 
@@ -111,7 +111,7 @@ zsystem_customize.utils.BarcodeScanner = class CustomBarcodeScanner extends erpn
         args: { search_value: result.item_code },
     }).then(r => {
         if (r.message?.error) {
-            frappe.msgprint(r.message.error);
+            this.show_alert(r.message.error);
         } else {
             // Attach serial number to response and call callback
             r.message.serial_no = result.serial_no;
@@ -119,7 +119,7 @@ zsystem_customize.utils.BarcodeScanner = class CustomBarcodeScanner extends erpn
         }
     }).catch(err => {
         console.error("Scan failed:", err);
-        frappe.msgprint("Error in scanning: " + err.message);
+        this.show_alert("Error in scanning: " + err.message);
     });
 }
 
