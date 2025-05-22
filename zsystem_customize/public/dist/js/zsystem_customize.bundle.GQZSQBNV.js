@@ -157,12 +157,10 @@
           let parts = custom_input.trim().split("|").map((p) => p.trim());
           let item_code = parts.find((part) => part.toUpperCase().startsWith("1P"));
           if (item_code) {
-            const prefixMatch = item_code.match(/^1P/i);
-            const prefix = prefixMatch ? prefixMatch[0].toUpperCase() : "";
-            let cleaned = item_code.slice(prefix.length).replace(/[-\s]/g, "");
+            let cleaned = item_code.replace(/^1P/i, "").replace(/[-\s]/g, "");
             return cleaned;
           }
-          return null;
+          return custom_input;
         }
         const cleaned_item_code = parseItemCode(input);
         if (!cleaned_item_code) {
@@ -175,13 +173,13 @@
         }
         const exists = await frappe.db.exists("Item", cleaned_item_code);
         if (exists) {
-          this.dialog.set_value("item_code", cleaned_item_code);
+          this.dialog.set_value("item_code", "");
           frappe.show_alert({
             message: `Item Code exists: ${cleaned_item_code}`,
             indicator: "green"
           });
         } else {
-          this.dialog.set_value("item_code", "");
+          this.dialog.set_value("item_code", cleaned_item_code);
           frappe.show_alert({
             message: `Item Code not found: ${cleaned_item_code}`,
             indicator: "red"
@@ -197,10 +195,15 @@
     barcode: function(frm, cdt, cdn) {
       let row = locals[cdt][cdn];
       if (row.barcode) {
-        let cleaned = row.barcode.replace(/^1P/i, "").replace(/\$$/, "").replace(/-/g, "").replace(/\|/g, "");
-        frappe.model.set_value(cdt, cdn, "barcode", cleaned);
+        let parts = row.barcode.split("|");
+        let target = parts.find((p) => /^1P/i.test(p));
+        if (target) {
+          let cleaned = target.replace(/^1P/i, "").replace(/-/g, "");
+          cleaned = cleaned;
+          frappe.model.set_value(cdt, cdn, "barcode", cleaned);
+        }
       }
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.WI7GQJJU.js.map
+//# sourceMappingURL=zsystem_customize.bundle.GQZSQBNV.js.map
