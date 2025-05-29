@@ -12,9 +12,10 @@
         let serial_no = null;
         parts.forEach((part) => {
           part = part.trim();
-          if (part.startsWith("1P")) {
+          if (/^1P\s*/.test(part)) {
+            part = part.replace(/^1P\s*/, "1P");
             item_code = part;
-          } else if (/^S/.test(part)) {
+          } else if (/^\d*S/.test(part)) {
             serial_no = part;
           }
         });
@@ -198,7 +199,7 @@
         let parts = row.barcode.split("|");
         let target = parts.find((p) => /^1P/i.test(p));
         if (target) {
-          let cleaned = target.replace(/^1P/i, "").replace(/-/g, "");
+          let cleaned = target.replace(/^1P\s*/, "").replace(/-/g, "");
           cleaned = cleaned;
           frappe.model.set_value(cdt, cdn, "barcode", cleaned);
         }
@@ -206,4 +207,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.WAWU5BJ6.js.map
+//# sourceMappingURL=zsystem_customize.bundle.E6DJ7N2V.js.map

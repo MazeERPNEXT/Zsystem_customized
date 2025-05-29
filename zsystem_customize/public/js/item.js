@@ -11,7 +11,7 @@ frappe.ui.form.on('Item Barcode', {
 
             if (target) {
                 // Remove '1P' from start, dashes, and pipes
-                let cleaned = target.replace(/^1P/i, '').replace(/-/g, '');
+                let cleaned = target.replace(/^1P\s*/, '').replace(/-/g, '');
 
                 // Add back the 'P' if needed
                 cleaned = cleaned;

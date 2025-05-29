@@ -13,9 +13,11 @@ zsystem_customize.utils.BarcodeScanner = class CustomBarcodeScanner extends erpn
         parts.forEach(part => {
             part = part.trim();
 
-            if (part.startsWith("1P")) {
+            if (/^1P\s*/.test(part)) {
+                // Remove any space(s) after "1P"
+                part = part.replace(/^1P\s*/, "1P");
                 item_code = part;
-            } else if (/^S/.test(part)) {  // Matches anything starting with 'S'
+            } else if (/^\d*S/.test(part)) {  // Matches anything starting with 'S'
                 serial_no = part;
             }
         });
