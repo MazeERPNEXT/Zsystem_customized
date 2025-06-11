@@ -1,6 +1,3 @@
-# Copyright (c) 2025, Frappe Technologies Pvt. Ltd.
-# For license information, please see license.txt
-
 import frappe
 
 def execute(filters=None):
@@ -9,10 +6,11 @@ def execute(filters=None):
         {"label": "Batch No", "fieldname": "batch_no", "fieldtype": "Link", "options": "Batch", "width": 250},
         {"label": "Supplier Invoice No", "fieldname": "bill_no", "fieldtype": "Data", "width": 250},
         {"label": "Supplier Invoice Date", "fieldname": "bill_date", "fieldtype": "Date", "width": 200},
-		 {"label": "Purchase Invoice No", "fieldname": "purchase_invoice_no", "fieldtype": "Link", "options": "Purchase Invoice", "width": 300},
+        {"label": "Purchase Invoice No", "fieldname": "purchase_invoice_no", "fieldtype": "Link", "options": "Purchase Invoice", "width": 300},
     ]
 
     data = []
+    seen = set()  # To avoid duplicates
 
     if filters and filters.get("serial_no"):
         serial_doc = frappe.get_doc("Serial No", filters.get("serial_no"))
@@ -29,6 +27,10 @@ def execute(filters=None):
                 )
 
                 for item in purchase_invoices:
+                    if (serial_doc.name, item.parent) in seen:
+                        continue  # Skip duplicates
+                    seen.add((serial_doc.name, item.parent))
+
                     invoice_data = frappe.get_doc("Purchase Invoice", item.parent)
 
                     data.append({
@@ -56,6 +58,10 @@ def execute(filters=None):
             )
 
             for item in purchase_invoices:
+                if (batch_doc.name, item.parent) in seen:
+                    continue  # Skip duplicates
+                seen.add((batch_doc.name, item.parent))
+
                 invoice_data = frappe.get_doc("Purchase Invoice", item.parent)
 
                 data.append({
