@@ -68,9 +68,6 @@ def get_excel_process(name):
     return build_response("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 ##Update data from quotation estimation to quotation
-import frappe
-from frappe.model.mapper import get_mapped_doc
-
 @frappe.whitelist(allow_guest=True)
 def quotation_estimation_to_quotation(source_name, target_doc=None):
     def update_items(source, target):
@@ -89,10 +86,13 @@ def quotation_estimation_to_quotation(source_name, target_doc=None):
                 if not item.conversion_factor:
                     item.conversion_factor = 1
 
+            # ✅ Set the source Quotation Estimation name
+            item.quotation_estimation = source.name  # <-- works properly
+
     doclist = get_mapped_doc(
-        "Quotation Estimation",  # Source Doctype
-        source_name,             # Source Name
-        {                        # Mapping Config
+        "Quotation Estimation",
+        source_name,
+        {
             "Quotation Estimation": {
                 "doctype": "Quotation",
                 "field_map": {
@@ -111,9 +111,10 @@ def quotation_estimation_to_quotation(source_name, target_doc=None):
                 },
             },
         },
-        target_doc,     # ✅ 3rd argument: existing target doc if any
-        update_items    # ✅ 4th argument: postprocess function
+        target_doc,
+        update_items,
     )
 
     return doclist
+
 
