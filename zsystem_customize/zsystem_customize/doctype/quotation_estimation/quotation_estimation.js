@@ -8,6 +8,17 @@ frappe.ui.form.on("Quotation Estimation", {
             console.log(names)
             window.open("/api/method/zsystem_customize.zsystem_customize.doctype.quotation_estimation.quotation_estimation.get_excel_process?name=" + names, '_blank');
         });
+        //Custom Quotation Btn
+        frm.add_custom_button(__("Quotation"),
+        ()=>frm.events.make_quotation_estimation_to_quotation(frm),
+        __("Create"))
+         create_btn = frm.page.set_inner_btn_group_as_primary(__('Create'));
+
+        // apply css to the actual button element
+        $(create_btn).css({
+            'background-color': 'black',
+            'color': 'white'
+        });
         
     },        
     on_change(frm, cdt, cdn) {
@@ -30,6 +41,14 @@ frappe.ui.form.on("Quotation Estimation", {
         calculate_overall_totalkp(frm);
         calculate_overall_totalprice(frm);
     },
+    make_quotation_estimation_to_quotation: function(frm) {
+        frappe.model.open_mapped_doc({
+            method: "zsystem_customize.zsystem_customize.doctype.quotation_estimation.quotation_estimation.quotation_estimation_to_quotation",
+            frm: frm,
+            run_link_triggers: true,
+        });
+    }
+
 });
 
 //Function to Calculate and update unit_kp
@@ -152,4 +171,5 @@ function calculate_overall_totalprice(frm){
     frm.refresh_field("total_price_value");
     console.log("Overall Price Total: ",total_price_value);
 }
+
 

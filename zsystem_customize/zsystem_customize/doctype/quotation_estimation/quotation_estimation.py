@@ -1,5 +1,9 @@
 import frappe
 import os
+from frappe.model.mapper import get_mapped_doc
+import datetime
+import  json
+from frappe.contacts.address_and_contact import load_address_and_contact
 from io import BytesIO
 from openpyxl import Workbook
 from frappe.model.document import Document
@@ -63,3 +67,51 @@ def get_excel_process(name):
 
     return build_response("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
+##Update data from quotation estimation to quotation
+@frappe.whitelist(allow_guest=True)
+def quotation_estimation_to_quotation(source_name, target_doc=None):
+
+    def update_items(source, target):
+        """Fetch Item Name & UOM after mapping each row"""
+        for item in target.items:
+            if item.item_code:
+                item_doc = frappe.get_doc("Item", item.item_code)
+
+                # Set Item Name
+                item.item_name = item_doc.item_name
+
+                # Set UOM
+                item.uom = item_doc.stock_uom
+
+                # Set conversion factor if empty
+                if not item.conversion_factor:
+                    item.conversion_factor = 1
+
+    doclist = get_mapped_doc(
+        "Quotation Estimation",
+        source_name,
+        {
+            "Quotation Estimation": {
+                "doctype": "Quotation",
+                "field_map": {
+                    "customer": "party_name",
+                    "date": "transaction_date",
+                },
+                "validation": {"docstatus": ["=", 1]},
+            },
+            "Quotation Estimation Child Table": {
+                "doctype": "Quotation Item",
+                "field_map": {
+                    "part_no": "item_code",
+                    "description": "description",
+                    "qty": "qty",
+                    "unit_lp": "rate",
+                }
+            }
+        },
+        target_doc,
+        after_save=False,
+        postprocess=update_items,
+    )
+
+    return doclist
