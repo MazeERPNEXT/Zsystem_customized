@@ -68,27 +68,31 @@ def get_excel_process(name):
     return build_response("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 ##Update data from quotation estimation to quotation
+import frappe
+from frappe.model.mapper import get_mapped_doc
+
 @frappe.whitelist(allow_guest=True)
 def quotation_estimation_to_quotation(source_name, target_doc=None):
-
     def update_items(source, target):
-        """Fetch Item Name, UOM, and ensure Rate is copied"""
-        for s_item, t_item in zip(source.items, target.items):
-            if t_item.item_code:
-                item_doc = frappe.get_doc("Item", t_item.item_code)
-                t_item.item_name = item_doc.item_name
-                t_item.uom = item_doc.stock_uom
-                if not t_item.conversion_factor:
-                    t_item.conversion_factor = 1
+        """Fetch Item Name & UOM after mapping each row"""
+        for item in target.items:
+            if item.item_code:
+                item_doc = frappe.get_doc("Item", item.item_code)
 
-            # Ensure unit_lp is copied as rate
-            if hasattr(s_item, "unit_lp"):
-                t_item.rate = s_item.unit_lp or 0
+                # Set Item Name
+                item.item_name = item_doc.item_name
+
+                # Set UOM
+                item.uom = item_doc.stock_uom
+
+                # Set conversion factor if empty
+                if not item.conversion_factor:
+                    item.conversion_factor = 1
 
     doclist = get_mapped_doc(
-        "Quotation Estimation",
-        source_name,
-        {
+        "Quotation Estimation",  # Source Doctype
+        source_name,             # Source Name
+        {                        # Mapping Config
             "Quotation Estimation": {
                 "doctype": "Quotation",
                 "field_map": {
@@ -107,9 +111,8 @@ def quotation_estimation_to_quotation(source_name, target_doc=None):
                 },
             },
         },
-        target_doc,
-        after_save=False,
-        postprocess=update_items,
+        target_doc,     # ✅ 3rd argument: existing target doc if any
+        update_items    # ✅ 4th argument: postprocess function
     )
 
     return doclist
