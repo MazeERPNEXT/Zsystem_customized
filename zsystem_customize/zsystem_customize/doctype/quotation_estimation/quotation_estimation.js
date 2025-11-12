@@ -9,7 +9,8 @@ frappe.ui.form.on("Quotation Estimation", {
             window.open("/api/method/zsystem_customize.zsystem_customize.doctype.quotation_estimation.quotation_estimation.get_excel_process?name=" + names, '_blank');
         });
         //Custom Quotation Btn
-        frm.add_custom_button(__("Quotation"),
+        if(frm.doc.docstatus == "1"){
+            frm.add_custom_button(__("Quotation"),
         ()=>frm.events.make_quotation_estimation_to_quotation(frm),
         __("Create"))
          create_btn = frm.page.set_inner_btn_group_as_primary(__('Create'));
@@ -19,6 +20,7 @@ frappe.ui.form.on("Quotation Estimation", {
             'background-color': 'black',
             'color': 'white'
         });
+        }
         
     },        
     on_change(frm, cdt, cdn) {
