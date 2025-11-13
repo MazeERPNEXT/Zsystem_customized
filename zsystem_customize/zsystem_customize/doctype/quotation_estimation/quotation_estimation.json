@@ -43,8 +43,7 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Customer Name",
-   "read_only": 1,
-   "unique": 1
+   "read_only": 1
   },
   {
    "default": "Today",
@@ -120,7 +119,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-10-13 11:37:11.214102",
+ "modified": "2025-11-13 12:22:08.562137",
  "modified_by": "Administrator",
  "module": "Zsystem Customize",
  "name": "Quotation Estimation",
