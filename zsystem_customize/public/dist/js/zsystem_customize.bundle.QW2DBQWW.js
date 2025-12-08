@@ -206,5 +206,44 @@
       }
     }
   });
+
+  // ../zsystem_customize/zsystem_customize/public/js/quotation.js
+  frappe.provide("zsystem_customize.selling");
+  erpnext.sales_common.setup_selling_controller();
+  if (!erpnext.set_unit_price_items_note) {
+    erpnext.set_unit_price_items_note = function() {
+    };
+  }
+  zsystem_customize.selling.QuotationController = class QuotationController extends erpnext.selling.SellingController {
+    set_dynamic_field_label() {
+      let quotation_to = this.frm.doc.quotation_to;
+      if (quotation_to === "Customer") {
+        this.frm.set_df_property("party_name", "label", "Customer/Company Name");
+        this.frm.set_df_property("party_name", "reqd", 1);
+        this.frm.fields_dict.party_name.get_query = null;
+      } else if (quotation_to === "Lead") {
+        this.frm.set_df_property("party_name", "label", "Lead");
+        this.frm.set_df_property("party_name", "reqd", 1);
+        this.frm.fields_dict.party_name.get_query = () => {
+          return { query: "erpnext.controllers.queries.lead_query" };
+        };
+      } else if (quotation_to === "Prospect") {
+        this.frm.set_df_property("party_name", "label", "Prospect");
+        this.frm.set_df_property("party_name", "reqd", 1);
+        this.frm.fields_dict.party_name.get_query = null;
+      }
+    }
+  };
+  frappe.ui.form.on("Quotation", {
+    setup(frm) {
+      frm.script_manager.make(zsystem_customize.selling.QuotationController);
+    },
+    refresh(frm) {
+      frm.trigger("set_dynamic_field_label");
+    },
+    quotation_to(frm) {
+      frm.trigger("set_dynamic_field_label");
+    }
+  });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.E6DJ7N2V.js.map
+//# sourceMappingURL=zsystem_customize.bundle.QW2DBQWW.js.map

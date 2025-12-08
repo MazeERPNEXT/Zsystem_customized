@@ -56,7 +56,7 @@ frappe.ui.form.on("Quotation Estimation", {
 //Function to Calculate and update unit_kp
 function calculate_total_unitkp(frm) {
     let total_unit_kp = 0;
-
+    let cust_disc = 0;
     // Check if table_buva exists and has data
     if (frm.doc.table_buva && frm.doc.table_buva.length > 0) {
         $.each(frm.doc.table_buva, function(i, d) {

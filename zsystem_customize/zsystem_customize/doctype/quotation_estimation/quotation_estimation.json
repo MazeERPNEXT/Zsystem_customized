@@ -13,6 +13,7 @@
   "column_break_qzog",
   "date",
   "amended_from",
+  "offer_type",
   "section_break_wynj",
   "table_buva",
   "total_section",
@@ -113,13 +114,19 @@
   {
    "fieldname": "column_break_nyyq",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "offer_type",
+   "fieldtype": "Link",
+   "label": "Offer Type",
+   "options": "Offer Types"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-13 12:22:08.562137",
+ "modified": "2025-12-08 11:50:51.324157",
  "modified_by": "Administrator",
  "module": "Zsystem Customize",
  "name": "Quotation Estimation",

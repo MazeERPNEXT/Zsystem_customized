@@ -33,8 +33,7 @@
    "fieldname": "description",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Description",
-   "read_only": 1
+   "label": "Description"
   },
   {
    "fieldname": "qty",
@@ -54,6 +53,7 @@
    "read_only": 1
   },
   {
+   "default": "1",
    "fieldname": "margin",
    "fieldtype": "Float",
    "label": "Margin"
@@ -63,6 +63,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "0",
    "fieldname": "cust_disc",
    "fieldtype": "Percent",
    "label": "Cust Disc(%)"
@@ -97,15 +98,17 @@
    "label": "Remarks"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-02-18 13:43:23.329750",
+ "modified": "2025-12-08 12:31:02.119939",
  "modified_by": "Administrator",
  "module": "Zsystem Customize",
  "name": "Quotation Estimation Child Table",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

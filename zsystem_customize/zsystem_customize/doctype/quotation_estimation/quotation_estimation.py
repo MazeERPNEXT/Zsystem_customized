@@ -117,4 +117,3 @@ def quotation_estimation_to_quotation(source_name, target_doc=None):
 
     return doclist
 
-
