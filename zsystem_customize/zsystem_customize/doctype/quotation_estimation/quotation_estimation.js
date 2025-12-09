@@ -174,4 +174,23 @@ function calculate_overall_totalprice(frm){
     console.log("Overall Price Total: ",total_price_value);
 }
 
+//Update description value html tag to plain text
+frappe.ui.form.on("Quotation Estimation Child Table", {
+    part_no: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
 
+        if (!row.part_no) return;
+
+        frappe.db.get_value("Item", row.part_no, "description")
+            .then(res => {
+                if (!res || !res.message) return;
+
+                let desc = res.message.description || "";
+
+                // Strip HTML tags
+                let plain_text = desc.replace(/<[^>]*>/g, "").trim();
+
+                frappe.model.set_value(cdt, cdn, "description", plain_text);
+            });
+    }
+});
