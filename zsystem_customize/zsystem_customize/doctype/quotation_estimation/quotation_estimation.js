@@ -22,7 +22,31 @@ frappe.ui.form.on("Quotation Estimation", {
         });
         }
         
-    },        
+    },
+    onload: function(frm) {
+        if (frm.doc.__islocal && frappe.session.user_fullname === "Rajarajan") {
+            if (frm.fields_dict.sales_person.df.options.includes("Rajarajan")) {
+                frm.set_value("sales_person", "Rajarajan");
+            } else {
+                frappe.msgprint("⚠️ 'Rajarajan' is not in Sales Person options.");
+            }
+        }
+        else if(frm.doc.__islocal && frappe.session.user_fullname === "chandru") {
+            if (frm.fields_dict.sales_person.df.options.includes("Chandru")) {
+                frm.set_value("sales_person", "Chandru");
+            } else {
+                frappe.msgprint("⚠️ 'Chandru' is not in Sales Person options.");
+            }
+        }
+        //based on offer type and sales person set naming series
+        set_naming_series(frm);
+    },
+    sales_person: function(frm) {
+        set_naming_series(frm);
+    },
+    offer_type: function(frm) {
+        set_naming_series(frm);
+    },       
     on_change(frm, cdt, cdn) {
         calculate_total_unitkp(frm);
         calculate_total_lpvalue(frm);
@@ -194,3 +218,42 @@ frappe.ui.form.on("Quotation Estimation Child Table", {
             });
     }
 });
+//function for offer type and sales person based on Naming series set
+function set_naming_series(frm) {
+    let sp = frm.doc.sales_person;
+    let ot = frm.doc.offer_type;
+
+    if (!sp || !ot) {
+        frm.set_value("naming_series", "");
+        return;
+    }
+
+    const person_code = {
+        "Chandru": "CR",
+        "Rajarajan": "RR"
+    }[sp];
+
+    if (!person_code) {
+        frm.set_value("naming_series", "");
+        return;
+    }
+
+    const offer_code = {
+        "Trade Siemens-TS": "TS",
+        "Services Support-SS": "SS",
+        "Trade Teltonika-TK": "TK",
+        "Trade Truck-TT": "TT",
+        "Trade Azbil-TA": "TA",
+        "Trade Disoic-TD": "TD",
+        "Project-PJ": "PJ",
+        "Trade Others-TO": "TO"
+    }[ot];
+
+    if (!offer_code) {
+        frm.set_value("naming_series", "");
+        return;
+    }
+
+    // Final naming series
+    frm.set_value("naming_series", `FY.-${offer_code}-${person_code}-.####`);
+}

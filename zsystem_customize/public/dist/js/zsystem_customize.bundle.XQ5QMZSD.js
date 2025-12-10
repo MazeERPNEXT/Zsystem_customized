@@ -380,15 +380,5 @@
       }
     }
   });
-
-  // ../zsystem_customize/zsystem_customize/public/js/sales_order.js
-  frappe.ui.form.on("Sales Order", {
-    onload(frm) {
-      frm.toggle_display("customer_name", false);
-    },
-    refresh(frm) {
-      frm.toggle_display("customer_name", false);
-    }
-  });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.TM4JQTQM.js.map
+//# sourceMappingURL=zsystem_customize.bundle.XQ5QMZSD.js.map

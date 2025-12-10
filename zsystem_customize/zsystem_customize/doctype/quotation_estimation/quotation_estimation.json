@@ -10,10 +10,11 @@
   "naming_series",
   "customer",
   "customer_name",
+  "amended_from",
   "column_break_qzog",
   "date",
-  "amended_from",
   "offer_type",
+  "sales_person",
   "section_break_wynj",
   "table_buva",
   "total_section",
@@ -120,13 +121,19 @@
    "fieldtype": "Link",
    "label": "Offer Type",
    "options": "Offer Types"
+  },
+  {
+   "fieldname": "sales_person",
+   "fieldtype": "Select",
+   "label": "Sales Person",
+   "options": "\nRajarajan\nChandru"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-08 11:50:51.324157",
+ "modified": "2025-12-10 14:54:36.113443",
  "modified_by": "Administrator",
  "module": "Zsystem Customize",
  "name": "Quotation Estimation",

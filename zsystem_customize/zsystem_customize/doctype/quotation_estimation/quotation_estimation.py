@@ -87,7 +87,7 @@ def quotation_estimation_to_quotation(source_name, target_doc=None):
                     item.conversion_factor = 1
 
             # ✅ Set the source Quotation Estimation name
-            item.quotation_estimation = source.name  # <-- works properly
+            item.custom_quotation_estimation = source.name  # <-- works properly
 
     doclist = get_mapped_doc(
         "Quotation Estimation",
