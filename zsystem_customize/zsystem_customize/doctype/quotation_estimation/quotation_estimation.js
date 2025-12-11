@@ -39,6 +39,7 @@ frappe.ui.form.on("Quotation Estimation", {
             }
         }
         //based on offer type and sales person set naming series
+        set_fiscal_year_prefix(frm);
         set_naming_series(frm);
     },
     sales_person: function(frm) {
@@ -46,6 +47,9 @@ frappe.ui.form.on("Quotation Estimation", {
     },
     offer_type: function(frm) {
         set_naming_series(frm);
+    },
+    before_save(frm) {
+        set_fiscal_year_prefix(frm);
     },       
     on_change(frm, cdt, cdn) {
         calculate_total_unitkp(frm);
@@ -218,8 +222,44 @@ frappe.ui.form.on("Quotation Estimation Child Table", {
             });
     }
 });
-//function for offer type and sales person based on Naming series set
+// ----------------------------------------------------------------------
+// 1️⃣ Fetch latest Fiscal Year and convert to YYYY format (2526)
+// ----------------------------------------------------------------------
+function set_fiscal_year_prefix(frm) {
+    frappe.call({
+        method: "frappe.client.get_list",
+        args: {
+            doctype: "Fiscal Year",
+            fields: ["name"],
+            order_by: "year_start_date desc",
+            limit_page_length: 1
+        },
+        callback: function(r) {
+            if (r.message && r.message.length > 0) {
+
+                let fy = r.message[0].name;   // → "2025-2026"
+                let p = fy.split("-");
+
+                if (p.length === 2) {
+                    frm.fy_code = p[0].slice(-2) + p[1].slice(-2);  
+                    // saves → 2526
+                    set_naming_series(frm); // refresh naming series
+                }
+            }
+        }
+    });
+}
+
+// ----------------------------------------------------------------------
+// 2️⃣ Build naming series dynamically
+// ----------------------------------------------------------------------
 function set_naming_series(frm) {
+
+    if (!frm.fy_code) {
+        frm.set_value("naming_series", "");
+        return;
+    }
+
     let sp = frm.doc.sales_person;
     let ot = frm.doc.offer_type;
 
@@ -233,11 +273,6 @@ function set_naming_series(frm) {
         "Rajarajan": "RR"
     }[sp];
 
-    if (!person_code) {
-        frm.set_value("naming_series", "");
-        return;
-    }
-
     const offer_code = {
         "Trade Siemens-TS": "TS",
         "Services Support-SS": "SS",
@@ -249,11 +284,11 @@ function set_naming_series(frm) {
         "Trade Others-TO": "TO"
     }[ot];
 
-    if (!offer_code) {
+    if (!person_code || !offer_code) {
         frm.set_value("naming_series", "");
         return;
     }
 
-    // Final naming series
-    frm.set_value("naming_series", `FY.-${offer_code}-${person_code}-.####`);
+    // FINAL FORMAT → 2526-TS-CR-.####
+    frm.set_value("naming_series", `${frm.fy_code}-${offer_code}-${person_code}-.####`);
 }
