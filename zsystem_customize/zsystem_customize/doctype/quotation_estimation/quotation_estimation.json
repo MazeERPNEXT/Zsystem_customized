@@ -81,7 +81,6 @@
    "label": "Series",
    "no_copy": 1,
    "print_hide": 1,
-   "read_only": 1,
    "reqd": 1,
    "set_only_once": 1
   },
@@ -119,21 +118,23 @@
   {
    "fieldname": "offer_type",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Offer Type",
    "options": "Offer Types"
   },
   {
    "fieldname": "sales_person",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Sales Person",
-   "options": "\nRajarajan\nChandru"
+   "options": "\nRajarajan\nChandru\nRamesh"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-10 14:54:36.113443",
+ "modified": "2025-12-17 11:49:04.857273",
  "modified_by": "Administrator",
  "module": "Zsystem Customize",
  "name": "Quotation Estimation",

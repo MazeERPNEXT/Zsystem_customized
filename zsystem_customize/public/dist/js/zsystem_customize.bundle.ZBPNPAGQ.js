@@ -208,6 +208,226 @@
   });
 
   // ../zsystem_customize/zsystem_customize/public/js/quotation.js
+  frappe.ui.form.on("Quotation", {
+    onload: function(frm) {
+      if (frm.doc.__islocal && (frappe.session.user_fullname === "Rajarajan" || frappe.session.user_fullname === "Rajarajan.M")) {
+        if (frm.fields_dict.custom_sales_person.df.options.includes("Rajarajan")) {
+          frm.set_value("custom_sales_person", "Rajarajan");
+        } else {
+          frappe.msgprint("\u26A0\uFE0F 'Rajarajan' is not in Sales Person options.");
+        }
+      } else if (frm.doc.__islocal && (frappe.session.user_fullname === "chandru" || frappe.session.user_fullname === "Chandru.R")) {
+        if (frm.fields_dict.custom_sales_person.df.options.includes("Chandru")) {
+          frm.set_value("custom_sales_person", "Chandru");
+        } else {
+          frappe.msgprint("\u26A0\uFE0F 'Chandru' is not in Sales Person options.");
+        }
+      } else if (frm.doc.__islocal && frappe.session.user_fullname === "Ramesh.P") {
+        if (frm.fields_dict.custom_sales_person.df.options.includes("Ramesh")) {
+          frm.set_value("custom_sales_person", "Ramesh");
+        } else {
+          frappe.msgprint("\u26A0\uFE0F 'Ramesh' is not in Sales Person options.");
+        }
+      }
+      set_fiscal_year_prefix(frm);
+      set_naming_series(frm);
+    },
+    custom_sales_person: function(frm) {
+      set_naming_series(frm);
+    },
+    custom_offer_type: function(frm) {
+      set_naming_series(frm);
+    },
+    before_save(frm) {
+      set_fiscal_year_prefix(frm);
+    }
+  });
+  function set_fiscal_year_prefix(frm) {
+    frappe.call({
+      method: "frappe.client.get_list",
+      args: {
+        doctype: "Fiscal Year",
+        fields: ["name"],
+        order_by: "year_start_date desc",
+        limit_page_length: 1
+      },
+      callback: function(r) {
+        if (r.message && r.message.length > 0) {
+          let fy = r.message[0].name;
+          let p = fy.split("-");
+          if (p.length === 2) {
+            frm.fy_code = p[0].slice(-2) + p[1].slice(-2);
+            set_naming_series(frm);
+          }
+        }
+      }
+    });
+  }
+  function set_naming_series(frm) {
+    if (!frm.fy_code) {
+      frm.set_value("naming_series", "");
+      return;
+    }
+    let sp = frm.doc.custom_sales_person;
+    let ot = frm.doc.custom_offer_type;
+    if (!sp || !ot) {
+      frm.set_value("naming_series", "");
+      return;
+    }
+    const person_code = {
+      "Chandru": "CR",
+      "Rajarajan": "MR",
+      "Ramesh": "RR"
+    }[sp];
+    const offer_code = {
+      "Trade Siemens-TS": "TS",
+      "Services Support-SS": "SS",
+      "Trade Teltonika-TK": "TK",
+      "Trade Truck-TT": "TT",
+      "Trade Azbil-TA": "TA",
+      "Trade Disoic-TD": "TD",
+      "Project-PJ": "PJ",
+      "Trade Others-TO": "TO"
+    }[ot];
+    if (!person_code || !offer_code) {
+      frm.set_value("naming_series", "");
+      return;
+    }
+    frm.set_value("naming_series", `${frm.fy_code}-${offer_code}-${person_code}-.####`);
+  }
+
+  // ../zsystem_customize/zsystem_customize/public/js/sales_order.js
+  frappe.ui.form.on("Sales Order", {
+    onload: function(frm) {
+      if (frm.doc.__islocal && frappe.session.user_fullname === "Rajarajan") {
+        if (frm.fields_dict.custom_sales_person.df.options.includes("Rajarajan")) {
+          frm.set_value("custom_sales_person", "Rajarajan");
+        } else {
+          frappe.msgprint("\u26A0\uFE0F 'Rajarajan' is not in Sales Person options.");
+        }
+      } else if (frm.doc.__islocal && frappe.session.user_fullname === "chandru") {
+        if (frm.fields_dict.custom_sales_person.df.options.includes("Chandru")) {
+          frm.set_value("custom_sales_person", "Chandru");
+        } else {
+          frappe.msgprint("\u26A0\uFE0F 'Chandru' is not in Sales Person options.");
+        }
+      } else if (frm.doc.__islocal && frappe.session.user_fullname === "Ramesh.P") {
+        if (frm.fields_dict.sales_person.df.options.includes("Ramesh")) {
+          frm.set_value("custom_sales_person", "Ramesh");
+        } else {
+          frappe.msgprint("\u26A0\uFE0F 'Ramesh' is not in Sales Person options.");
+        }
+      }
+    },
+    before_submit: function(frm) {
+      return new Promise((resolve, reject) => {
+        frappe.call({
+          method: "zsystem_customize.sales_order.validate_so_stock",
+          args: {
+            doctype: frm.doctype,
+            name: frm.doc.name
+          },
+          callback: function(r) {
+            if (!r.message || !r.message.has_error) {
+              resolve();
+              return;
+            }
+            let d = new frappe.ui.Dialog({
+              title: "Stock Warning",
+              size: "large",
+              fields: [
+                {
+                  fieldtype: "HTML",
+                  fieldname: "stock_html",
+                  options: r.message.html
+                }
+              ],
+              primary_action_label: "Submit",
+              primary_action() {
+                d.hide();
+                resolve();
+              },
+              secondary_action_label: "Hold",
+              secondary_action() {
+                d.hide();
+                reject();
+              }
+            });
+            d.show();
+          }
+        });
+      });
+    }
+  });
+
+  // ../zsystem_customize/zsystem_customize/public/js/address_contact.js
+  frappe.provide("frappe.ui.form");
+  var ZsystemContactAddressQuickEntryForm = class extends frappe.ui.form.ContactAddressQuickEntryForm {
+    constructor(doctype, after_insert, init_callback, doc, force) {
+      super(doctype, after_insert, init_callback, doc, force);
+      this.skip_redirect_on_error = true;
+    }
+    render_dialog() {
+      this.mandatory = this.mandatory.concat([
+        "email_address",
+        "mobile_number"
+      ]);
+      super.render_dialog();
+      this.dialog.set_df_property("email_address", "reqd", 1);
+      this.dialog.set_df_property("mobile_number", "reqd", 1);
+      this.dialog.refresh();
+    }
+    insert() {
+      const map_field_names = {
+        email_address: "email_id",
+        mobile_number: "mobile_no"
+      };
+      Object.entries(map_field_names).forEach(([from, to]) => {
+        this.dialog.doc[to] = this.dialog.doc[from];
+        delete this.dialog.doc[from];
+      });
+      return super.insert();
+    }
+    get_variant_fields() {
+      return [
+        {
+          fieldtype: "Section Break",
+          label: __("Primary Contact Details")
+        },
+        {
+          label: __("Email Id"),
+          fieldname: "email_address",
+          fieldtype: "Data",
+          options: "Email"
+        },
+        {
+          fieldtype: "Column Break"
+        },
+        {
+          label: __("Mobile Number"),
+          fieldname: "mobile_number",
+          fieldtype: "Data"
+        },
+        {
+          fieldtype: "Section Break",
+          label: __("Primary Address Details")
+        },
+        {
+          label: __("Address Line 1"),
+          fieldname: "address_line1",
+          fieldtype: "Data"
+        },
+        {
+          label: __("Address Line 2"),
+          fieldname: "address_line2",
+          fieldtype: "Data"
+        }
+      ];
+    }
+  };
+  frappe.ui.form.ContactAddressQuickEntryForm = ZsystemContactAddressQuickEntryForm;
+
+  // ../zsystem_customize/zsystem_customize/public/js/override_quotation.js
   frappe.provide("zsystem_customize.selling");
   erpnext.sales_common.setup_selling_controller();
   if (!erpnext.set_unit_price_items_note) {
@@ -381,4 +601,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.XQ5QMZSD.js.map
+//# sourceMappingURL=zsystem_customize.bundle.ZBPNPAGQ.js.map

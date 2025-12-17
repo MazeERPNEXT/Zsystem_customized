@@ -63,3 +63,4 @@ class ItemQuickEntryForm extends frappe.ui.form.QuickEntryForm {
 }
 
 frappe.ui.form.ItemQuickEntryForm = ItemQuickEntryForm;
+
