@@ -1,45 +1,74 @@
-frappe.ui.form.on("Quotation",{
-     onload: function(frm) {
-        if (frm.doc.__islocal && (frappe.session.user_fullname === "Rajarajan" ||frappe.session.user_fullname === "Rajarajan.M" )) {
-            if (frm.fields_dict.custom_sales_person.df.options.includes("Rajarajan")) {
-                frm.set_value("custom_sales_person", "Rajarajan");
-            } else {
-                frappe.msgprint("⚠️ 'Rajarajan' is not in Sales Person options.");
-            }
-        }
-        else if(frm.doc.__islocal && (frappe.session.user_fullname === "chandru" ||frappe.session.user_fullname === "Chandru.R" )) {
-            if (frm.fields_dict.custom_sales_person.df.options.includes("Chandru")) {
-                frm.set_value("custom_sales_person", "Chandru");
-            } else {
-                frappe.msgprint("⚠️ 'Chandru' is not in Sales Person options.");
-            }
-        }
-        else if(frm.doc.__islocal && frappe.session.user_fullname === "Ramesh.P") {
-            if (frm.fields_dict.custom_sales_person.df.options.includes("Ramesh")) {
-                frm.set_value("custom_sales_person", "Ramesh");
-            } else {
-                frappe.msgprint("⚠️ 'Ramesh' is not in Sales Person options.");
-            }
-        }
-        //based on offer type and sales person set naming series
-        set_fiscal_year_prefix(frm);
-        set_naming_series(frm);
-     },
-     custom_sales_person: function(frm) {
-        set_naming_series(frm);
-    },
-    custom_offer_type: function(frm) {
-        set_naming_series(frm);
-    },
-    before_save(frm) {
-        set_fiscal_year_prefix(frm);
-    },
-})
+frappe.ui.form.on("Quotation", {
 
-// ----------------------------------------------------------------------
-// 1️⃣ Fetch latest Fiscal Year and convert to YYYY format (2526)
-// ----------------------------------------------------------------------
+    // --------------------------------------------------
+    // ONLOAD – only for NEW documents
+    // --------------------------------------------------
+    onload(frm) {
+        if (!frm.doc.__islocal) return;
+
+        set_sales_person_by_user(frm);
+        set_fiscal_year_prefix(frm);
+    },
+
+    // --------------------------------------------------
+    // Rebuild naming series on changes (NEW doc only)
+    // --------------------------------------------------
+    custom_sales_person(frm) {
+        if (frm.doc.__islocal) {
+            set_naming_series(frm);
+        }
+    },
+
+    custom_offer_type(frm) {
+        if (frm.doc.__islocal) {
+            set_naming_series(frm);
+        }
+    },
+
+    // --------------------------------------------------
+    // FINAL chance before insert
+    // --------------------------------------------------
+    validate(frm) {
+        if (frm.doc.__islocal) {
+            set_naming_series(frm);
+        }
+    }
+});
+
+
+// ==================================================
+// 1️⃣ Auto-set Sales Person based on user
+// ==================================================
+function set_sales_person_by_user(frm) {
+    if (!frm.doc.__islocal) return;
+
+    const user_map = {
+        "Rajarajan": "Rajarajan",
+        "Rajarajan.M": "Rajarajan",
+        "chandru": "Chandru",
+        "Chandru.R": "Chandru",
+        "Ramesh.P": "Ramesh"
+    };
+
+    const sp = user_map[frappe.session.user_fullname];
+    if (!sp) return;
+
+    const options = frm.fields_dict.custom_sales_person.df.options || "";
+    if (options.includes(sp)) {
+        frm.set_value("custom_sales_person", sp);
+    } else {
+        frappe.msgprint(`⚠️ '${sp}' not available in Sales Person options`);
+    }
+}
+
+
+// ==================================================
+// 2️⃣ Fetch latest Fiscal Year → 2526
+// ==================================================
 function set_fiscal_year_prefix(frm) {
+
+    if (!frm.doc.__islocal || frm.fy_code) return;
+
     frappe.call({
         method: "frappe.client.get_list",
         args: {
@@ -48,44 +77,38 @@ function set_fiscal_year_prefix(frm) {
             order_by: "year_start_date desc",
             limit_page_length: 1
         },
-        callback: function(r) {
-            if (r.message && r.message.length > 0) {
+        callback(r) {
+            if (!r.message || !r.message.length) return;
 
-                let fy = r.message[0].name;   // → "2025-2026"
-                let p = fy.split("-");
+            let fy = r.message[0].name;     // 2025-2026
+            let parts = fy.split("-");
 
-                if (p.length === 2) {
-                    frm.fy_code = p[0].slice(-2) + p[1].slice(-2);  
-                    // saves → 2526
-                    set_naming_series(frm); // refresh naming series
-                }
+            if (parts.length === 2) {
+                frm.fy_code = parts[0].slice(-2) + parts[1].slice(-2); // 2526
+                set_naming_series(frm);
             }
         }
     });
 }
 
-// ----------------------------------------------------------------------
-// 2️⃣ Build naming series dynamically
-// ----------------------------------------------------------------------
+
+// ==================================================
+// 3️⃣ Build Naming Series
+// ==================================================
 function set_naming_series(frm) {
 
-    if (!frm.fy_code) {
-        frm.set_value("naming_series", "");
-        return;
-    }
+    if (!frm.doc.__islocal) return;
+    if (!frm.fy_code) return;
 
-    let sp = frm.doc.custom_sales_person;
-    let ot = frm.doc.custom_offer_type;
+    const sp = frm.doc.custom_sales_person;
+    const ot = frm.doc.custom_offer_type;
 
-    if (!sp || !ot) {
-        frm.set_value("naming_series", "");
-        return;
-    }
+    if (!sp || !ot) return;
 
     const person_code = {
         "Chandru": "CR",
         "Rajarajan": "MR",
-        "Ramesh":"RR"
+        "Ramesh": "RR"
     }[sp];
 
     const offer_code = {
@@ -99,11 +122,11 @@ function set_naming_series(frm) {
         "Trade Others-TO": "TO"
     }[ot];
 
-    if (!person_code || !offer_code) {
-        frm.set_value("naming_series", "");
-        return;
-    }
+    if (!person_code || !offer_code) return;
 
     // FINAL FORMAT → 2526-TS-CR-.####
-    frm.set_value("naming_series", `${frm.fy_code}-${offer_code}-${person_code}-.####`);
-}        
+    frm.set_value(
+        "naming_series",
+        `${frm.fy_code}-${offer_code}-${person_code}-.####`
+    );
+}

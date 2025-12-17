@@ -209,40 +209,51 @@
 
   // ../zsystem_customize/zsystem_customize/public/js/quotation.js
   frappe.ui.form.on("Quotation", {
-    onload: function(frm) {
-      if (frm.doc.__islocal && (frappe.session.user_fullname === "Rajarajan" || frappe.session.user_fullname === "Rajarajan.M")) {
-        if (frm.fields_dict.custom_sales_person.df.options.includes("Rajarajan")) {
-          frm.set_value("custom_sales_person", "Rajarajan");
-        } else {
-          frappe.msgprint("\u26A0\uFE0F 'Rajarajan' is not in Sales Person options.");
-        }
-      } else if (frm.doc.__islocal && (frappe.session.user_fullname === "chandru" || frappe.session.user_fullname === "Chandru.R")) {
-        if (frm.fields_dict.custom_sales_person.df.options.includes("Chandru")) {
-          frm.set_value("custom_sales_person", "Chandru");
-        } else {
-          frappe.msgprint("\u26A0\uFE0F 'Chandru' is not in Sales Person options.");
-        }
-      } else if (frm.doc.__islocal && frappe.session.user_fullname === "Ramesh.P") {
-        if (frm.fields_dict.custom_sales_person.df.options.includes("Ramesh")) {
-          frm.set_value("custom_sales_person", "Ramesh");
-        } else {
-          frappe.msgprint("\u26A0\uFE0F 'Ramesh' is not in Sales Person options.");
-        }
+    onload(frm) {
+      if (!frm.doc.__islocal)
+        return;
+      set_sales_person_by_user(frm);
+      set_fiscal_year_prefix(frm);
+    },
+    custom_sales_person(frm) {
+      if (frm.doc.__islocal) {
+        set_naming_series(frm);
       }
-      set_fiscal_year_prefix(frm);
-      set_naming_series(frm);
     },
-    custom_sales_person: function(frm) {
-      set_naming_series(frm);
+    custom_offer_type(frm) {
+      if (frm.doc.__islocal) {
+        set_naming_series(frm);
+      }
     },
-    custom_offer_type: function(frm) {
-      set_naming_series(frm);
-    },
-    before_save(frm) {
-      set_fiscal_year_prefix(frm);
+    validate(frm) {
+      if (frm.doc.__islocal) {
+        set_naming_series(frm);
+      }
     }
   });
+  function set_sales_person_by_user(frm) {
+    if (!frm.doc.__islocal)
+      return;
+    const user_map = {
+      "Rajarajan": "Rajarajan",
+      "Rajarajan.M": "Rajarajan",
+      "chandru": "Chandru",
+      "Chandru.R": "Chandru",
+      "Ramesh.P": "Ramesh"
+    };
+    const sp = user_map[frappe.session.user_fullname];
+    if (!sp)
+      return;
+    const options = frm.fields_dict.custom_sales_person.df.options || "";
+    if (options.includes(sp)) {
+      frm.set_value("custom_sales_person", sp);
+    } else {
+      frappe.msgprint(`\u26A0\uFE0F '${sp}' not available in Sales Person options`);
+    }
+  }
   function set_fiscal_year_prefix(frm) {
+    if (!frm.doc.__islocal || frm.fy_code)
+      return;
     frappe.call({
       method: "frappe.client.get_list",
       args: {
@@ -251,29 +262,27 @@
         order_by: "year_start_date desc",
         limit_page_length: 1
       },
-      callback: function(r) {
-        if (r.message && r.message.length > 0) {
-          let fy = r.message[0].name;
-          let p = fy.split("-");
-          if (p.length === 2) {
-            frm.fy_code = p[0].slice(-2) + p[1].slice(-2);
-            set_naming_series(frm);
-          }
+      callback(r) {
+        if (!r.message || !r.message.length)
+          return;
+        let fy = r.message[0].name;
+        let parts = fy.split("-");
+        if (parts.length === 2) {
+          frm.fy_code = parts[0].slice(-2) + parts[1].slice(-2);
+          set_naming_series(frm);
         }
       }
     });
   }
   function set_naming_series(frm) {
-    if (!frm.fy_code) {
-      frm.set_value("naming_series", "");
+    if (!frm.doc.__islocal)
       return;
-    }
-    let sp = frm.doc.custom_sales_person;
-    let ot = frm.doc.custom_offer_type;
-    if (!sp || !ot) {
-      frm.set_value("naming_series", "");
+    if (!frm.fy_code)
       return;
-    }
+    const sp = frm.doc.custom_sales_person;
+    const ot = frm.doc.custom_offer_type;
+    if (!sp || !ot)
+      return;
     const person_code = {
       "Chandru": "CR",
       "Rajarajan": "MR",
@@ -289,11 +298,12 @@
       "Project-PJ": "PJ",
       "Trade Others-TO": "TO"
     }[ot];
-    if (!person_code || !offer_code) {
-      frm.set_value("naming_series", "");
+    if (!person_code || !offer_code)
       return;
-    }
-    frm.set_value("naming_series", `${frm.fy_code}-${offer_code}-${person_code}-.####`);
+    frm.set_value(
+      "naming_series",
+      `${frm.fy_code}-${offer_code}-${person_code}-.####`
+    );
   }
 
   // ../zsystem_customize/zsystem_customize/public/js/sales_order.js
@@ -318,6 +328,10 @@
           frappe.msgprint("\u26A0\uFE0F 'Ramesh' is not in Sales Person options.");
         }
       }
+      set_custom_quotation_no(frm);
+    },
+    refresh: function(frm) {
+      set_custom_quotation_no(frm);
     },
     before_submit: function(frm) {
       return new Promise((resolve, reject) => {
@@ -359,6 +373,19 @@
       });
     }
   });
+  function set_custom_quotation_no(frm) {
+    if (frm.doc.custom_quotation_no)
+      return;
+    if (frm.doc.items && frm.doc.items.length > 0) {
+      let first_row = frm.doc.items[0];
+      if (first_row.prevdoc_docname) {
+        frm.set_value(
+          "custom_quotation_no",
+          first_row.prevdoc_docname
+        );
+      }
+    }
+  }
 
   // ../zsystem_customize/zsystem_customize/public/js/address_contact.js
   frappe.provide("frappe.ui.form");
@@ -601,4 +628,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.ZBPNPAGQ.js.map
+//# sourceMappingURL=zsystem_customize.bundle.5E2KKUFW.js.map

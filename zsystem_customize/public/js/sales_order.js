@@ -21,6 +21,10 @@ frappe.ui.form.on("Sales Order",{
                 frappe.msgprint("⚠️ 'Ramesh' is not in Sales Person options.");
             }
         }
+        set_custom_quotation_no(frm);
+    },
+    refresh: function (frm) {
+        set_custom_quotation_no(frm);
     },
     before_submit: function (frm) {
         return new Promise((resolve, reject) => {
@@ -69,6 +73,22 @@ frappe.ui.form.on("Sales Order",{
                 }
             });
         });
-    }
+    },
+});
+function set_custom_quotation_no(frm) {
+    // Already set → don’t override
+    if (frm.doc.custom_quotation_no) return;
 
-})
+    // Check first item row
+    if (frm.doc.items && frm.doc.items.length > 0) {
+        let first_row = frm.doc.items[0];
+
+        if (first_row.prevdoc_docname) {
+            frm.set_value(
+                "custom_quotation_no",
+                first_row.prevdoc_docname
+            );
+        }
+    }
+}
+
