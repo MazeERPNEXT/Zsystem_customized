@@ -115,3 +115,31 @@ def validate_so_stock(doctype, name):
         }
 
     return {"has_error": False}
+
+import frappe
+
+@frappe.whitelist()
+def get_last_sales_order_details(customer, item_code, current_so=None):
+    if not customer or not item_code:
+        return {}
+
+    result = frappe.db.sql("""
+        SELECT
+            soi.rate,
+            so.transaction_date
+        FROM
+            `tabSales Order Item` soi
+        INNER JOIN
+            `tabSales Order` so ON so.name = soi.parent
+        WHERE
+            so.customer = %s
+            AND soi.item_code = %s
+            AND so.docstatus = 1
+            AND (%s = '' OR so.name != %s)
+        ORDER BY
+            so.transaction_date DESC,
+            so.creation DESC
+        LIMIT 1
+    """, (customer, item_code, current_so or "", current_so or ""), as_dict=True)
+
+    return result[0] if result else {}

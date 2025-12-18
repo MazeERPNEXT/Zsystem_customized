@@ -66,6 +66,9 @@ zsystem_customize.selling.QuotationController = class QuotationController extend
 			});
 		}
 	}
+	tc_name() {
+		this.get_terms();
+	}
     show_alternative_items_dialog() {
 		let me = this;
 

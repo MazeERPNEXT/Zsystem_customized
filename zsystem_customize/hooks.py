@@ -30,7 +30,8 @@ app_include_js = ["zsystem_customize.bundle.js"]
 # include js in doctype views
 doctype_js = {
     "Purchase Receipt": "public/js/purchase_receipt.js",
-    "Delivery Note": "public/js/delivery_note.js"
+    "Delivery Note": "public/js/delivery_note.js",
+    "Sales Order":"public/js/sales_order.js"
 }
 
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}

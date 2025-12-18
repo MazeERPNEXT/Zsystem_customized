@@ -3,5 +3,5 @@ import './quick_entry';
 import './item';
 import './quotation';
 import './sales_order';
-import './address_contact';
+import './override_contactquickform';
 import './override_quotation';

@@ -309,29 +309,27 @@
   // ../zsystem_customize/zsystem_customize/public/js/sales_order.js
   frappe.ui.form.on("Sales Order", {
     onload: function(frm) {
-      if (frm.doc.__islocal && frappe.session.user_fullname === "Rajarajan") {
-        if (frm.fields_dict.custom_sales_person.df.options.includes("Rajarajan")) {
-          frm.set_value("custom_sales_person", "Rajarajan");
-        } else {
-          frappe.msgprint("\u26A0\uFE0F 'Rajarajan' is not in Sales Person options.");
-        }
-      } else if (frm.doc.__islocal && frappe.session.user_fullname === "chandru") {
-        if (frm.fields_dict.custom_sales_person.df.options.includes("Chandru")) {
-          frm.set_value("custom_sales_person", "Chandru");
-        } else {
-          frappe.msgprint("\u26A0\uFE0F 'Chandru' is not in Sales Person options.");
-        }
-      } else if (frm.doc.__islocal && frappe.session.user_fullname === "Ramesh.P") {
-        if (frm.fields_dict.sales_person.df.options.includes("Ramesh")) {
-          frm.set_value("custom_sales_person", "Ramesh");
-        } else {
-          frappe.msgprint("\u26A0\uFE0F 'Ramesh' is not in Sales Person options.");
-        }
-      }
+      if (!frm.doc.__islocal)
+        return;
+      set_sales_person_by_user2(frm);
+      set_fiscal_year_prefix2(frm);
       set_custom_quotation_no(frm);
+    },
+    custom_sales_person(frm) {
+      if (frm.doc.__islocal) {
+        set_naming_series2(frm);
+      }
     },
     refresh: function(frm) {
       set_custom_quotation_no(frm);
+    },
+    onload_post_render(frm) {
+      var _a;
+      if (frm.doc.__islocal && ((_a = frm.doc.items) == null ? void 0 : _a.length)) {
+        frm.doc.items.forEach((row) => {
+          fetch_last_sales_order_details(frm, row.doctype, row.name);
+        });
+      }
     },
     before_submit: function(frm) {
       return new Promise((resolve, reject) => {
@@ -386,73 +384,99 @@
       }
     }
   }
-
-  // ../zsystem_customize/zsystem_customize/public/js/address_contact.js
-  frappe.provide("frappe.ui.form");
-  var ZsystemContactAddressQuickEntryForm = class extends frappe.ui.form.ContactAddressQuickEntryForm {
-    constructor(doctype, after_insert, init_callback, doc, force) {
-      super(doctype, after_insert, init_callback, doc, force);
-      this.skip_redirect_on_error = true;
+  function set_sales_person_by_user2(frm) {
+    if (!frm.doc.__islocal)
+      return;
+    const user_map = {
+      "Rajarajan": "Rajarajan",
+      "Rajarajan.M": "Rajarajan",
+      "chandru": "Chandru",
+      "Chandru.R": "Chandru",
+      "Ramesh.P": "Ramesh"
+    };
+    const sp = user_map[frappe.session.user_fullname];
+    if (!sp)
+      return;
+    const options = frm.fields_dict.custom_sales_person.df.options || "";
+    if (options.includes(sp)) {
+      frm.set_value("custom_sales_person", sp);
+    } else {
+      frappe.msgprint(`\u26A0\uFE0F '${sp}' not available in Sales Person options`);
     }
-    render_dialog() {
-      this.mandatory = this.mandatory.concat([
-        "email_address",
-        "mobile_number"
-      ]);
-      super.render_dialog();
-      this.dialog.set_df_property("email_address", "reqd", 1);
-      this.dialog.set_df_property("mobile_number", "reqd", 1);
-      this.dialog.refresh();
-    }
-    insert() {
-      const map_field_names = {
-        email_address: "email_id",
-        mobile_number: "mobile_no"
-      };
-      Object.entries(map_field_names).forEach(([from, to]) => {
-        this.dialog.doc[to] = this.dialog.doc[from];
-        delete this.dialog.doc[from];
-      });
-      return super.insert();
-    }
-    get_variant_fields() {
-      return [
-        {
-          fieldtype: "Section Break",
-          label: __("Primary Contact Details")
-        },
-        {
-          label: __("Email Id"),
-          fieldname: "email_address",
-          fieldtype: "Data",
-          options: "Email"
-        },
-        {
-          fieldtype: "Column Break"
-        },
-        {
-          label: __("Mobile Number"),
-          fieldname: "mobile_number",
-          fieldtype: "Data"
-        },
-        {
-          fieldtype: "Section Break",
-          label: __("Primary Address Details")
-        },
-        {
-          label: __("Address Line 1"),
-          fieldname: "address_line1",
-          fieldtype: "Data"
-        },
-        {
-          label: __("Address Line 2"),
-          fieldname: "address_line2",
-          fieldtype: "Data"
+  }
+  function set_fiscal_year_prefix2(frm) {
+    if (!frm.doc.__islocal || frm.fy_code)
+      return;
+    frappe.call({
+      method: "frappe.client.get_list",
+      args: {
+        doctype: "Fiscal Year",
+        fields: ["name"],
+        order_by: "year_start_date desc",
+        limit_page_length: 1
+      },
+      callback(r) {
+        if (!r.message || !r.message.length)
+          return;
+        let fy = r.message[0].name;
+        let parts = fy.split("-");
+        if (parts.length === 2) {
+          frm.fy_code = parts[0].slice(-2) + parts[1].slice(-2);
+          set_naming_series2(frm);
         }
-      ];
+      }
+    });
+  }
+  function set_naming_series2(frm) {
+    if (!frm.doc.__islocal)
+      return;
+    if (!frm.fy_code)
+      return;
+    const sp = frm.doc.custom_sales_person;
+    const quote_no = frm.doc.custom_quotation_no;
+    if (!quote_no)
+      return;
+    const qn = quote_no.slice(-4);
+    if (!sp)
+      return;
+    const person_code = {
+      "Chandru": "CR",
+      "Rajarajan": "MR",
+      "Ramesh": "RR"
+    }[sp];
+    if (!person_code)
+      return;
+    frm.set_value(
+      "naming_series",
+      `${frm.fy_code}-${person_code}-${qn}-.####`
+    );
+  }
+  frappe.ui.form.on("Sales Order Item", {
+    item_code(frm, cdt, cdn) {
+      fetch_last_sales_order_details(frm, cdt, cdn);
     }
-  };
-  frappe.ui.form.ContactAddressQuickEntryForm = ZsystemContactAddressQuickEntryForm;
+  });
+  function fetch_last_sales_order_details(frm, cdt, cdn) {
+    let row = locals[cdt][cdn];
+    if (!row.item_code || !frm.doc.customer)
+      return;
+    frappe.call({
+      method: "zsystem_customize.sales_order.get_last_sales_order_details",
+      args: {
+        customer: frm.doc.customer,
+        item_code: row.item_code,
+        current_so: frm.doc.name || ""
+      },
+      callback(r) {
+        if (r.message && r.message.rate) {
+          frappe.model.set_value(cdt, cdn, {
+            custom_last_selling_amount: r.message.rate,
+            custom_last_selling_date: r.message.transaction_date
+          });
+        }
+      }
+    });
+  }
 
   // ../zsystem_customize/zsystem_customize/public/js/override_quotation.js
   frappe.provide("zsystem_customize.selling");
@@ -495,6 +519,9 @@
           frm: me.frm
         });
       }
+    }
+    tc_name() {
+      this.get_terms();
     }
     show_alternative_items_dialog() {
       let me = this;
@@ -628,4 +655,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.5E2KKUFW.js.map
+//# sourceMappingURL=zsystem_customize.bundle.GICF2EDA.js.map
