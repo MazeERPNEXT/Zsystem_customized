@@ -478,6 +478,101 @@
     });
   }
 
+  // ../zsystem_customize/zsystem_customize/public/js/override_contactquickform.js
+  frappe.provide("frappe.ui.form");
+  var ZsystemCustomerQuickEntryForm = class extends frappe.ui.form.CustomerQuickEntryForm {
+    constructor(doctype, after_insert, init_callback, doc, force) {
+      super(doctype, after_insert, init_callback, doc, force);
+      this.skip_redirect_on_error = true;
+    }
+    render_dialog() {
+      this.fields = (this.fields || []).concat(this.get_variant_fields());
+      super.render_dialog();
+    }
+    insert() {
+      const map_field_names = {
+        email_address: "email_id",
+        mobile_number: "mobile_no"
+      };
+      Object.entries(map_field_names).forEach(([from, to]) => {
+        if (this.dialog.doc[from]) {
+          this.dialog.doc[to] = this.dialog.doc[from];
+          delete this.dialog.doc[from];
+        }
+      });
+      return super.insert();
+    }
+    get_variant_fields() {
+      return [
+        {
+          fieldtype: "Section Break",
+          label: __("Primary Contact Detail")
+        },
+        {
+          label: __("Email Id"),
+          fieldname: "email_address",
+          fieldtype: "Data",
+          options: "Email",
+          reqd: 1
+        },
+        {
+          fieldtype: "Column Break"
+        },
+        {
+          label: __("Mobile Number"),
+          fieldname: "mobile_number",
+          fieldtype: "Data",
+          reqd: 1
+        },
+        {
+          fieldtype: "Section Break",
+          label: __("Primary Address Details")
+        },
+        {
+          label: __("Address Line 1"),
+          fieldname: "address_line1",
+          fieldtype: "Data"
+        },
+        {
+          label: __("Address Line 2"),
+          fieldname: "address_line2",
+          fieldtype: "Data"
+        },
+        {
+          label: __("ZIP Code"),
+          fieldname: "pincode",
+          fieldtype: "Data"
+        },
+        {
+          fieldtype: "Column Break"
+        },
+        {
+          label: __("City"),
+          fieldname: "city",
+          fieldtype: "Data"
+        },
+        {
+          label: __("State/Province"),
+          fieldname: "state",
+          fieldtype: "Data"
+        },
+        {
+          label: __("Country"),
+          fieldname: "country",
+          fieldtype: "Link",
+          options: "Country"
+        },
+        {
+          label: __("Customer POS Id"),
+          fieldname: "customer_pos_id",
+          fieldtype: "Data",
+          hidden: 1
+        }
+      ];
+    }
+  };
+  frappe.ui.form.CustomerQuickEntryForm = ZsystemCustomerQuickEntryForm;
+
   // ../zsystem_customize/zsystem_customize/public/js/override_quotation.js
   frappe.provide("zsystem_customize.selling");
   erpnext.sales_common.setup_selling_controller();
@@ -655,4 +750,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.GICF2EDA.js.map
+//# sourceMappingURL=zsystem_customize.bundle.JNWL75G4.js.map

@@ -1,89 +1,108 @@
-// frappe.provide("frappe.ui.form");
+frappe.provide("frappe.ui.form");
 
-// class ZsystemContactAddressQuickEntryForm
-//     extends frappe.ui.form.ContactAddressQuickEntryForm {
+class ZsystemCustomerQuickEntryForm
+	extends frappe.ui.form.CustomerQuickEntryForm {
 
-//     render_dialog() {
-//         super.render_dialog();
+	constructor(doctype, after_insert, init_callback, doc, force) {
+		super(doctype, after_insert, init_callback, doc, force);
+		this.skip_redirect_on_error = true;
+	}
 
-//         this.mandatory = this.mandatory || [];
+	render_dialog() {
+		// Ensure fields array exists
+		this.fields = (this.fields || []).concat(this.get_variant_fields());
+		super.render_dialog();
+	}
 
-//         ["email_address", "mobile_number"].forEach(field => {
-//             if (!this.mandatory.includes(field)) {
-//                 this.mandatory.push(field);
-//             }
+	insert() {
+		/**
+		 * Map alias fields to actual Customer fields
+		 * because email_id & mobile_no are readonly in doctype
+		 */
+		const map_field_names = {
+			email_address: "email_id",
+			mobile_number: "mobile_no",
+		};
 
-//             this.dialog.set_df_property(field, "reqd", 1);
-//         });
+		Object.entries(map_field_names).forEach(([from, to]) => {
+			if (this.dialog.doc[from]) {
+				this.dialog.doc[to] = this.dialog.doc[from];
+				delete this.dialog.doc[from];
+			}
+		});
 
-//         this.dialog.refresh();
-//     }
+		return super.insert();
+	}
 
-//     insert() {
-//         // 🔒 HARD validation
-//         if (!this.dialog.doc.email_address) {
-//             frappe.msgprint(__("Email Address is mandatory"));
-//             return;
-//         }
+	get_variant_fields() {
+		return [
+			{
+				fieldtype: "Section Break",
+				label: __("Primary Contact Detail"),
+			},
+			{
+				label: __("Email Id"),
+				fieldname: "email_address",
+				fieldtype: "Data",
+				options: "Email",
+				reqd: 1,
+			},
+			{
+				fieldtype: "Column Break",
+			},
+			{
+				label: __("Mobile Number"),
+				fieldname: "mobile_number",
+				fieldtype: "Data",
+				reqd: 1,
+			},
+			{
+				fieldtype: "Section Break",
+				label: __("Primary Address Details"),
+			},
+			{
+				label: __("Address Line 1"),
+				fieldname: "address_line1",
+				fieldtype: "Data",
+			},
+			{
+				label: __("Address Line 2"),
+				fieldname: "address_line2",
+				fieldtype: "Data",
+			},
+			{
+				label: __("ZIP Code"),
+				fieldname: "pincode",
+				fieldtype: "Data",
+			},
+			{
+				fieldtype: "Column Break",
+			},
+			{
+				label: __("City"),
+				fieldname: "city",
+				fieldtype: "Data",
+			},
+			{
+				label: __("State/Province"),
+				fieldname: "state",
+				fieldtype: "Data",
+			},
+			{
+				label: __("Country"),
+				fieldname: "country",
+				fieldtype: "Link",
+				options: "Country",
+			},
+			{
+				label: __("Customer POS Id"),
+				fieldname: "customer_pos_id",
+				fieldtype: "Data",
+				hidden: 1,
+			},
+		];
+	}
+}
 
-//         if (!this.dialog.doc.mobile_number) {
-//             frappe.msgprint(__("Mobile Number is mandatory"));
-//             return;
-//         }
-
-//         // Map alias fields
-//         const map_field_names = {
-//             email_address: "email_id",
-//             mobile_number: "mobile_no",
-//         };
-
-//         Object.entries(map_field_names).forEach(([from, to]) => {
-//             this.dialog.doc[to] = this.dialog.doc[from];
-//             delete this.dialog.doc[from];
-//         });
-
-//         return super.insert();
-//     }
-
-//     get_variant_fields() {
-//         return [
-//             {
-//                 fieldtype: "Section Break",
-//                 label: __("Primary Contact Detail"),
-//             },
-//             {
-//                 label: __("Email Id"),
-//                 fieldname: "email_address",
-//                 fieldtype: "Data",
-//                 options: "Email",
-//                 reqd: 1,
-//             },
-//             {
-//                 fieldtype: "Column Break",
-//             },
-//             {
-//                 label: __("Mobile Number"),
-//                 fieldname: "mobile_number",
-//                 fieldtype: "Data",
-//                 reqd: 1,
-//             },
-//             {
-//                 fieldtype: "Section Break",
-//                 label: __("Primary Address Details"),
-//             },
-//             {
-//                 label: __("Address Line 1"),
-//                 fieldname: "address_line1",
-//                 fieldtype: "Data",
-//             },
-//             {
-//                 label: __("Address Line 2"),
-//                 fieldname: "address_line2",
-//                 fieldtype: "Data",
-//             },
-//         ];
-//     }
-// }
-
-// // ✅ Override AFTER frappe loads
-//     frappe.ui.form.ContactAddressQuickEntryForm =ZsystemContactAddressQuickEntryForm;
+// ✅ Proper override (after frappe loads)
+frappe.ui.form.CustomerQuickEntryForm = ZsystemCustomerQuickEntryForm;
