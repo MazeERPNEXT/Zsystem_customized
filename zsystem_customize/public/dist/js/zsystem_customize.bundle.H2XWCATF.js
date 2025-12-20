@@ -572,7 +572,7 @@
     }
   };
   frappe.ui.form.CustomerQuickEntryForm = ZsystemCustomerQuickEntryForm;
-  var ZsystemGSTQuickEntryForm = class extends GSTQuickEntryForm {
+  var ZsystemGSTQuickEntryForm = class extends frappe.ui.form.CustomerQuickEntryForm {
     get_address_fields() {
       const fields = super.get_address_fields();
       for (const field of fields) {
@@ -814,4 +814,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.SIJDT2GU.js.map
+//# sourceMappingURL=zsystem_customize.bundle.H2XWCATF.js.map

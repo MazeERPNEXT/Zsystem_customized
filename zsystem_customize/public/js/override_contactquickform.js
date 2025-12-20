@@ -108,7 +108,7 @@ class ZsystemCustomerQuickEntryForm
 frappe.ui.form.CustomerQuickEntryForm = ZsystemCustomerQuickEntryForm;
 
 //update Indian Complaince
-class ZsystemGSTQuickEntryForm extends GSTQuickEntryForm {
+class ZsystemGSTQuickEntryForm extends frappe.ui.form.CustomerQuickEntryForm {
     get_address_fields() {
         const fields = super.get_address_fields();
 
