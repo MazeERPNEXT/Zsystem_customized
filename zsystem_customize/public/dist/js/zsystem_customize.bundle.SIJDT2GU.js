@@ -572,6 +572,70 @@
     }
   };
   frappe.ui.form.CustomerQuickEntryForm = ZsystemCustomerQuickEntryForm;
+  var ZsystemGSTQuickEntryForm = class extends GSTQuickEntryForm {
+    get_address_fields() {
+      const fields = super.get_address_fields();
+      for (const field of fields) {
+        const fieldname = field.fieldname === "_pincode" ? "pincode" : field.fieldname;
+        if (!field.label && fieldname) {
+          field.label = frappe.meta.get_label("Address", fieldname);
+        }
+      }
+      return fields;
+    }
+    render_dialog() {
+      this.mandatory = [
+        ...this.get_gstin_field(),
+        ...this.mandatory,
+        ...this.get_contact_fields(),
+        ...this.get_address_fields()
+      ];
+      if (this.doctype === "Customer") {
+        this.mandatory.push({
+          label: __("Customer POS ID"),
+          fieldname: "customer_pos_id",
+          fieldtype: "Data",
+          hidden: 1
+        });
+      }
+      super.render_dialog();
+    }
+    get_contact_fields() {
+      return [
+        {
+          label: __("Primary Contact Details"),
+          fieldname: "primary_contact_section",
+          fieldtype: "Section Break",
+          collapsible: 0
+        },
+        {
+          label: __("Email ID"),
+          fieldname: "_email_id",
+          fieldtype: "Data",
+          options: "Email",
+          reqd: 1
+        },
+        {
+          fieldtype: "Column Break"
+        },
+        {
+          label: __("Mobile Number"),
+          fieldname: "_mobile_no",
+          fieldtype: "Data",
+          reqd: 1
+        }
+      ];
+    }
+    update_doc() {
+      const doc = super.update_doc();
+      doc._address_line1 = doc.address_line1;
+      delete doc.address_line1;
+      doc.email_id = doc._email_id;
+      doc.mobile_no = doc._mobile_no;
+      return doc;
+    }
+  };
+  frappe.ui.form.CustomerQuickEntryForm = ZsystemGSTQuickEntryForm;
 
   // ../zsystem_customize/zsystem_customize/public/js/override_quotation.js
   frappe.provide("zsystem_customize.selling");
@@ -750,4 +814,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.JNWL75G4.js.map
+//# sourceMappingURL=zsystem_customize.bundle.SIJDT2GU.js.map
