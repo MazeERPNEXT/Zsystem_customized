@@ -12,6 +12,17 @@ frappe.ui.form.on("Sales Order",{
     },
     refresh: function (frm) {
         set_custom_quotation_no(frm);
+         if (frm.doc.docstatus === 1) {
+            // Remove default buttons to avoid confusion
+            frm.page.clear_actions_menu();
+            // frm.page.btn_secondary && frm.page.btn_secondary.hide();
+            frm.add_custom_button(
+                __("Cancel & Amend"),
+                () => cancel_and_amend(frm),
+            );
+            //  frm.custom_cancel_amend_added = true;
+        }
+        //  move_cancel_amend_after_menu();
     },
     onload_post_render(frm) {
         // Run only when created from Quotation
@@ -209,3 +220,52 @@ function fetch_last_sales_order_details(frm, cdt, cdn) {
         }
     });
 }
+
+// amend and cancel code
+function cancel_and_amend(frm) {
+    frappe.confirm(
+        __("This will CANCEL the document and create an AMENDED copy with Revision (R1, R2...). Continue?"),
+        () => {
+
+            // STEP 1: Cancel Sales Order
+            frappe.call({
+                method: "frappe.client.cancel",
+                args: {
+                    doctype: frm.doc.doctype,
+                    name: frm.doc.name
+                },
+                freeze: true
+            }).then(() => {
+
+                // STEP 2: Create amended document with custom revision
+                frappe.call({
+                    method: "zsystem_customize.sales_order.create_amended_with_revision",
+                    args: {
+                        sales_order: frm.doc.name
+                    },
+                    freeze: true
+                }).then(r => {
+                    if (r.message && r.message.name) {
+                        frappe.set_route("Form", "Sales Order", r.message.name);
+                    }
+                });
+
+            });
+        }
+    );
+}
+// // position change next dot icon set the cancel and amend button
+// function move_cancel_amend_after_menu() {
+//     setTimeout(() => {
+//         const $menu = $(".page-actions .menu-btn-group");
+//         const $btn = $(".page-actions .btn:contains('Cancel & Amend')");
+
+//         if ($menu.length && $btn.length) {
+//             $btn
+//                 .addClass("btn-secondary")
+//                 .css("margin-left", "8px")
+//                 .insertAfter($menu);
+//         }
+//     }, 200);
+// }
+

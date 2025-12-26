@@ -322,6 +322,13 @@
     },
     refresh: function(frm) {
       set_custom_quotation_no(frm);
+      if (frm.doc.docstatus === 1) {
+        frm.page.clear_actions_menu();
+        frm.add_custom_button(
+          __("Cancel & Amend"),
+          () => cancel_and_amend(frm)
+        );
+      }
     },
     onload_post_render(frm) {
       var _a;
@@ -476,6 +483,33 @@
         }
       }
     });
+  }
+  function cancel_and_amend(frm) {
+    frappe.confirm(
+      __("This will CANCEL the document and create an AMENDED copy with Revision (R1, R2...). Continue?"),
+      () => {
+        frappe.call({
+          method: "frappe.client.cancel",
+          args: {
+            doctype: frm.doc.doctype,
+            name: frm.doc.name
+          },
+          freeze: true
+        }).then(() => {
+          frappe.call({
+            method: "zsystem_customize.sales_order.create_amended_with_revision",
+            args: {
+              sales_order: frm.doc.name
+            },
+            freeze: true
+          }).then((r) => {
+            if (r.message && r.message.name) {
+              frappe.set_route("Form", "Sales Order", r.message.name);
+            }
+          });
+        });
+      }
+    );
   }
 
   // ../zsystem_customize/zsystem_customize/public/js/override_contactquickform.js
@@ -719,4 +753,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.ZWBT6RAD.js.map
+//# sourceMappingURL=zsystem_customize.bundle.BQANRFAM.js.map
