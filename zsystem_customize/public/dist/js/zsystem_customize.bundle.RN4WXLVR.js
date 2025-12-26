@@ -322,12 +322,17 @@
     },
     refresh: function(frm) {
       set_custom_quotation_no(frm);
+      frm.custom_cancel_amend_added = false;
+      frm.page.clear_actions_menu();
+      $(".page-actions .btn:contains('Cancel & Amend')").remove();
       if (frm.doc.docstatus === 1) {
-        frm.page.clear_actions_menu();
+        frm.page.btn_secondary && frm.page.btn_secondary.hide();
         frm.add_custom_button(
           __("Cancel & Amend"),
           () => cancel_and_amend(frm)
         );
+        frm.custom_cancel_amend_added = true;
+        move_cancel_amend_after_menu();
       }
     },
     onload_post_render(frm) {
@@ -510,6 +515,17 @@
         });
       }
     );
+  }
+  function move_cancel_amend_after_menu() {
+    if (cur_frm.doc.docstatus !== 1)
+      return;
+    setTimeout(() => {
+      const $menu = $(".page-actions .menu-btn-group");
+      const $btn = $(".page-actions .btn:contains('Cancel & Amend')");
+      if ($menu.length && $btn.length) {
+        $btn.addClass("btn-secondary").css("margin-left", "8px").insertAfter($menu);
+      }
+    }, 200);
   }
 
   // ../zsystem_customize/zsystem_customize/public/js/override_contactquickform.js
@@ -753,4 +769,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.BQANRFAM.js.map
+//# sourceMappingURL=zsystem_customize.bundle.RN4WXLVR.js.map

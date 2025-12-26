@@ -12,17 +12,26 @@ frappe.ui.form.on("Sales Order",{
     },
     refresh: function (frm) {
         set_custom_quotation_no(frm);
-         if (frm.doc.docstatus === 1) {
-            // Remove default buttons to avoid confusion
-            frm.page.clear_actions_menu();
-            // frm.page.btn_secondary && frm.page.btn_secondary.hide();
+         frm.custom_cancel_amend_added = false;
+
+        // Remove any existing Cancel & Amend button
+        frm.page.clear_actions_menu();
+        $(".page-actions .btn:contains('Cancel & Amend')").remove();
+
+        // ✅ ONLY for Submitted documents
+        if (frm.doc.docstatus === 1) {
+
+            frm.page.btn_secondary && frm.page.btn_secondary.hide();
+
             frm.add_custom_button(
                 __("Cancel & Amend"),
-                () => cancel_and_amend(frm),
+                () => cancel_and_amend(frm)
             );
-            //  frm.custom_cancel_amend_added = true;
+
+            frm.custom_cancel_amend_added = true;
+
+            move_cancel_amend_after_menu();
         }
-        //  move_cancel_amend_after_menu();
     },
     onload_post_render(frm) {
         // Run only when created from Quotation
@@ -254,18 +263,23 @@ function cancel_and_amend(frm) {
         }
     );
 }
-// // position change next dot icon set the cancel and amend button
-// function move_cancel_amend_after_menu() {
-//     setTimeout(() => {
-//         const $menu = $(".page-actions .menu-btn-group");
-//         const $btn = $(".page-actions .btn:contains('Cancel & Amend')");
+// position change next dot icon set the cancel and amend button
+function move_cancel_amend_after_menu() {
 
-//         if ($menu.length && $btn.length) {
-//             $btn
-//                 .addClass("btn-secondary")
-//                 .css("margin-left", "8px")
-//                 .insertAfter($menu);
-//         }
-//     }, 200);
-// }
+    // ❌ Do nothing if Draft
+    if (cur_frm.doc.docstatus !== 1) return;
+
+    setTimeout(() => {
+        const $menu = $(".page-actions .menu-btn-group");
+        const $btn = $(".page-actions .btn:contains('Cancel & Amend')");
+
+        if ($menu.length && $btn.length) {
+            $btn
+                .addClass("btn-secondary")
+                .css("margin-left", "8px")
+                .insertAfter($menu);
+        }
+    }, 200);
+}
+
 
