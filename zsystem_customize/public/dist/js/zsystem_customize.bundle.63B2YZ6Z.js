@@ -768,5 +768,37 @@
       }
     }
   });
+
+  // ../zsystem_customize/zsystem_customize/public/js/sale_invoice.js
+  frappe.ui.form.on("Sales Invoice", {
+    custom_income_account(frm) {
+      if (!frm.doc.custom_income_account)
+        return;
+      frm.doc.items.forEach((row) => {
+        frappe.model.set_value(
+          row.doctype,
+          row.name,
+          "income_account",
+          frm.doc.custom_income_account
+        );
+      });
+    }
+  });
+
+  // ../zsystem_customize/zsystem_customize/public/js/purchase_invoice.js
+  frappe.ui.form.on("Purchase Invoice", {
+    custom_expense_head(frm) {
+      if (!frm.doc.custom_expense_head)
+        return;
+      frm.doc.items.forEach((row) => {
+        frappe.model.set_value(
+          row.doctype,
+          row.name,
+          "expense_account",
+          frm.doc.custom_expense_head
+        );
+      });
+    }
+  });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.RN4WXLVR.js.map
+//# sourceMappingURL=zsystem_customize.bundle.63B2YZ6Z.js.map
