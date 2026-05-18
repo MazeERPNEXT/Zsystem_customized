@@ -4,6 +4,18 @@ frappe.ui.form.on("Sales Order",{
         set_sales_person_by_user(frm);
         set_fiscal_year_prefix(frm);
         set_custom_quotation_no(frm);
+        //set value based login user
+        // if (!frm.doc.custom_owner) {
+        //     frappe.db.get_value(
+        //         "User",
+        //         frappe.session.user,
+        //         "full_name"
+        //     ).then(r => {
+        //         if (r.message) {
+        //             frm.set_value("custom_owner", r.message.full_name);
+        //         }
+        //     });
+        // }
     },
     custom_sales_person(frm) {
         if (frm.doc.__islocal) {
