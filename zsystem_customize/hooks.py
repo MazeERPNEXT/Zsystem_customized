@@ -121,14 +121,15 @@ doctype_js = {
 
 override_doctype_class = {
 	# "ToDo": "custom_app.overrides.CustomToDo"
-    "Subcontracting Receipt": "zsystem_customize.update_stock_in_item_doctype.CustomSubcontractingReceipt",
-    "Stock Reconciliation": "zsystem_customize.update_stock_in_item_doctype.CustomStockReconciliation",
-    "Stock Entry": "zsystem_customize.update_stock_in_item_doctype.CustomStockEntry",
-    "Purchase Receipt": "zsystem_customize.update_stock_in_item_doctype.CustomPurchaseReceipt",
-    "Delivery Note": "zsystem_customize.update_stock_in_item_doctype.CustomDeliveryNote",
-    "Asset Capitalization": "zsystem_customize.update_stock_in_item_doctype.CustomAssetCapitalization",
-    "Sales Invoice": "zsystem_customize.update_stock_in_item_doctype.CustomSalesInvoice",
-    "Purchase Invoice": "zsystem_customize.update_stock_in_item_doctype.CustomPurchaseInvoice",
+    # "Subcontracting Receipt": "zsystem_customize.update_stock_in_item_doctype.CustomSubcontractingReceipt",
+    # "Stock Reconciliation": "zsystem_customize.update_stock_in_item_doctype.CustomStockReconciliation",
+    # "Stock Entry": "zsystem_customize.update_stock_in_item_doctype.CustomStockEntry",
+    # "Purchase Receipt": "zsystem_customize.update_stock_in_item_doctype.CustomPurchaseReceipt",
+    # "Delivery Note": "zsystem_customize.update_stock_in_item_doctype.CustomDeliveryNote",
+    # "Asset Capitalization": "zsystem_customize.update_stock_in_item_doctype.CustomAssetCapitalization",
+    # "Sales Invoice": "zsystem_customize.update_stock_in_item_doctype.CustomSalesInvoice",
+    # "Purchase Invoice": "zsystem_customize.update_stock_in_item_doctype.CustomPurchaseInvoice",
+
     # "Sales Order": "armtech.armtech.overrides_class.sales_order.CustomSalesOrder",
     # "Purchase Order": "zsystem_customize.update_stock_in_item_doctype.CustomPurchaseOrder",
 }
