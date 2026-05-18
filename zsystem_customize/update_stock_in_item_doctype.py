@@ -10,9 +10,14 @@ from erpnext.assets.doctype.asset_capitalization.asset_capitalization import Ass
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import PurchaseInvoice
 from erpnext.stock.utils import get_combine_datetime
-from erpnext.stock.stock_ledger import validate_cancellation, set_as_cancel, get_or_make_bin, \
-                                            get_args_for_future_sle, validate_serial_no, make_entry, \
-                                                repost_current_voucher, update_bin_qty
+# from erpnext.stock.stock_ledger import validate_cancellation, set_as_cancel, get_or_make_bin, \
+#                                             get_args_for_future_sle, validate_serial_no, make_entry, \
+#                                                 repost_current_voucher, update_bin_qty
+from erpnext.stock.stock_ledger import (
+    validate_cancellation,
+    set_as_cancel,
+    get_or_make_bin
+)
 from frappe.utils import ( flt )
 from erpnext.stock.utils import ( get_incoming_outgoing_rate_for_cancel)
 # from erpnext.buying.doctype.purchase_order.purchase_order import PurchaseOrder
