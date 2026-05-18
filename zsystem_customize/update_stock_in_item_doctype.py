@@ -35,7 +35,7 @@ class UpdateStockMixin(Generic[T]):
                         WHERE item_code = %s
                         group by item_code
                     """, (item_code,), as_dict=True)
-            frappe.db.set_value("Item", item_code, "custom_stock_qty", bins[0]['a_qty'])
+            frappe.db.set_value("Item", item_code, "custom_stock_qty", bins[0]['a_qty']) 
             
 
 class CustomSubcontractingReceipt(UpdateStockMixin['CustomSubcontractingReceipt'], SubcontractingReceipt):
