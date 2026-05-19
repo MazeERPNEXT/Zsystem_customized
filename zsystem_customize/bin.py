@@ -1,6 +1,6 @@
 import frappe
 
-def bulk_sync_all_items():
+def execute():
     """
     Run this once to fix all existing incorrect stock values
     """

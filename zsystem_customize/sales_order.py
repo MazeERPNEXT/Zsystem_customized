@@ -198,3 +198,70 @@ def create_amended_with_revision(sales_order):
     return {
         "name": new_doc.name
     }
+
+# //Sales order to DC update delivery qty
+
+import frappe
+
+def update_sales_order_delivery_qty(doc, method=None):
+
+    # Store delivered qty against SO Item
+    so_item_qty_map = {}
+
+    for dn_item in doc.items:
+
+        if not dn_item.so_detail:
+            continue
+
+        if dn_item.so_detail not in so_item_qty_map:
+            so_item_qty_map[dn_item.so_detail] = 0
+
+        so_item_qty_map[dn_item.so_detail] += dn_item.qty
+
+    # Update Sales Order Item fields
+    for so_detail, qty in so_item_qty_map.items():
+
+        # Get SO Item qty
+        so_qty = frappe.db.get_value(
+            "Sales Order Item",
+            so_detail,
+            "qty"
+        ) or 0
+
+        # Current delivered qty
+        current_delivery_qty = frappe.db.get_value(
+            "Sales Order Item",
+            so_detail,
+            "custom_delivery_qty"
+        ) or 0
+
+        # New delivered qty
+        new_delivery_qty = current_delivery_qty + qty
+
+        # Balance qty
+        balance_qty = so_qty - new_delivery_qty
+
+        if balance_qty < 0:
+            balance_qty = 0
+
+        # Update delivery qty
+        frappe.db.set_value(
+            "Sales Order Item",
+            so_detail,
+            "custom_delivery_qty",
+            new_delivery_qty
+        )
+
+        # Update balance qty
+        frappe.db.set_value(
+            "Sales Order Item",
+            so_detail,
+            "custom_balance_qty",
+            balance_qty
+        )
+        if new_delivery_qty < so_qty:
+            frappe.db.set_value("Sales Order Item",so_detail,"custom_delivery_status","Partially Delivered")
+        elif new_delivery_qty == so_qty:
+            frappe.db.set_value("Sales Order Item",so_detail,"custom_delivery_status","Delivered")
+
+    frappe.db.commit()

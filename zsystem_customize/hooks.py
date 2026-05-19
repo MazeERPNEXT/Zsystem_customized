@@ -138,7 +138,10 @@ override_doctype_class = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
+doc_events = {
+    "Delivery Note": {
+        "on_submit": "zsystem_customize.sales_order.update_sales_order_delivery_qty"
+    }
 #     "Sales Order": {
 #         "before_submit": "zsystem_customize.sales_order.validate_so_stock"
 #     }
@@ -147,7 +150,7 @@ override_doctype_class = {
 	# 	"on_cancel": "method",
 	# 	"on_trash": "method"
 	# }
-# }
+}
 
 # Scheduled Tasks
 # ---------------
