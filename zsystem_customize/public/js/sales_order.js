@@ -293,5 +293,3 @@ function move_cancel_amend_after_menu() {
         }
     }, 200);
 }
-
-

@@ -34,7 +34,10 @@ doctype_js = {
     # "Sales Order":"public/js/sales_order.js"
 }
 
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {
+    "Delivery Note": "public/js/delivery_note_list.js",
+    "Sales Order":"public/js/sales_order_list.js"
+    }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -129,6 +132,8 @@ override_doctype_class = {
     "Asset Capitalization": "zsystem_customize.update_stock_in_item_doctype.CustomAssetCapitalization",
     "Sales Invoice": "zsystem_customize.update_stock_in_item_doctype.CustomSalesInvoice",
     "Purchase Invoice": "zsystem_customize.update_stock_in_item_doctype.CustomPurchaseInvoice",
+    "Delivery Note":"zsystem_customize.delivery_note.CustomDeliveryNote",
+    "Sales Order": "zsystem_customize.sales_order_status.CustomSalesOrder"
 
     # "Sales Order": "armtech.armtech.overrides_class.sales_order.CustomSalesOrder",
     # "Purchase Order": "zsystem_customize.update_stock_in_item_doctype.CustomPurchaseOrder",
@@ -140,7 +145,8 @@ override_doctype_class = {
 
 doc_events = {
     "Delivery Note": {
-        "on_submit": "zsystem_customize.sales_order.update_sales_order_delivery_qty"
+        "on_submit": "zsystem_customize.sales_order.update_sales_order_delivery_qty",
+        "on_cancel": "zsystem_customize.sales_order.update_sales_order_delivery_qty"
     }
 #     "Sales Order": {
 #         "before_submit": "zsystem_customize.sales_order.validate_so_stock"

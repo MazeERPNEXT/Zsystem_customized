@@ -800,5 +800,76 @@
       });
     }
   });
+
+  // ../zsystem_customize/zsystem_customize/public/js/delivery_note.js
+  frappe.ui.form.on("Delivery Note Item", {
+    item_code: function(frm, cdt, cdn) {
+      locals[cdt][cdn].use_serial_batch_fields = 1;
+      frappe.flags.dialog_set = false;
+      frappe.flags.hide_serial_batch_dialog = false;
+    }
+  });
+  frappe.ui.form.on("Delivery Note", {
+    refresh(frm) {
+      if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
+        frm.page.set_indicator(
+          __("Return DC"),
+          "orange"
+        );
+      } else if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1 && flt(frm.doc.per_billed) >= 100) {
+        frm.page.set_indicator(
+          __("Completed"),
+          "green"
+        );
+      } else if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1) {
+        frm.page.set_indicator(
+          __("Returnable DC"),
+          "orange"
+        );
+      }
+    },
+    on_submit(frm) {
+      if (frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
+        frappe.db.set_value(
+          "Delivery Note",
+          frm.doc.name,
+          "status",
+          "Return DC"
+        ).then(() => {
+          frm.reload_doc();
+        });
+      } else if (frm.doc.custom_returnable_dc == 1) {
+        frappe.db.set_value(
+          "Delivery Note",
+          frm.doc.name,
+          "status",
+          "Returnable DC"
+        ).then(() => {
+          frm.reload_doc();
+        });
+      }
+    }
+  });
+
+  // ../zsystem_customize/zsystem_customize/public/js/so_status.js
+  frappe.ui.form.on("Sales Order", {
+    refresh(frm) {
+      update_custom_status(frm);
+    },
+    per_delivered(frm) {
+      update_custom_status(frm);
+    }
+  });
+  function update_custom_status(frm) {
+    if (frm.doc.docstatus === 1) {
+      if (frm.doc.per_delivered < 100 && frm.doc.per_delivered > 0) {
+        frm.page.set_indicator(
+          __("Partially Deliver"),
+          "orange"
+        );
+        frm.set_value("status", "Partially Deliver");
+      }
+    }
+  }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.QW4H4RNL.js.map
+//# sourceMappingURL=zsystem_customize.bundle.ZGFE3JL3.js.map

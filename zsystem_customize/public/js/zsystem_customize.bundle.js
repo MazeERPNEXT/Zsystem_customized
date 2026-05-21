@@ -7,3 +7,5 @@ import './override_contactquickform';
 import './override_quotation';
 import './sale_invoice';
 import './purchase_invoice';
+import './delivery_note';
+import './so_status';

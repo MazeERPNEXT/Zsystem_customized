@@ -221,7 +221,7 @@ def update_sales_order_delivery_qty(doc, method=None):
     # Update Sales Order Item fields
     for so_detail, qty in so_item_qty_map.items():
 
-        # Get SO Item qty
+        # SO Item ordered qty
         so_qty = frappe.db.get_value(
             "Sales Order Item",
             so_detail,
@@ -235,8 +235,21 @@ def update_sales_order_delivery_qty(doc, method=None):
             "custom_delivery_qty"
         ) or 0
 
-        # New delivered qty
-        new_delivery_qty = current_delivery_qty + qty
+        # -------------------------------------------------
+        # Submit = Add Qty
+        # Cancel = Reduce Qty
+        # -------------------------------------------------
+
+        if doc.docstatus == 2:
+            # Delivery Note Cancel
+            new_delivery_qty = current_delivery_qty - qty
+
+            if new_delivery_qty < 0:
+                new_delivery_qty = 0
+
+        else:
+            # Delivery Note Submit
+            new_delivery_qty = current_delivery_qty + qty
 
         # Balance qty
         balance_qty = so_qty - new_delivery_qty
@@ -244,24 +257,25 @@ def update_sales_order_delivery_qty(doc, method=None):
         if balance_qty < 0:
             balance_qty = 0
 
-        # Update delivery qty
-        frappe.db.set_value(
-            "Sales Order Item",
-            so_detail,
-            "custom_delivery_qty",
-            new_delivery_qty
-        )
+        # Delivery Status
+        if new_delivery_qty == 0:
+            delivery_status = "Pending"
 
-        # Update balance qty
+        elif new_delivery_qty < so_qty:
+            delivery_status = "Partially Delivered"
+
+        else:
+            delivery_status = "Delivered"
+
+        # Update fields
         frappe.db.set_value(
             "Sales Order Item",
             so_detail,
-            "custom_balance_qty",
-            balance_qty
+            {
+                "custom_delivery_qty": new_delivery_qty,
+                "custom_balance_qty": balance_qty,
+                "custom_delivery_status": delivery_status
+            }
         )
-        if new_delivery_qty < so_qty:
-            frappe.db.set_value("Sales Order Item",so_detail,"custom_delivery_status","Partially Delivered")
-        elif new_delivery_qty == so_qty:
-            frappe.db.set_value("Sales Order Item",so_detail,"custom_delivery_status","Delivered")
 
     frappe.db.commit()
