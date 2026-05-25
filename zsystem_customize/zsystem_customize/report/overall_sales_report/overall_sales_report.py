@@ -150,12 +150,9 @@ def get_sales_order_data(filters):
     if filters.get("to_date"):
         conditions += f" AND so.transaction_date <= '{filters.get('to_date')}' "
 
-    partial_condition = ""
-
-    if filters.get("status") == "Partially Deliver":
-        partial_condition = " AND so.status = 'Partially Deliver' "
-
     return frappe.db.sql(f"""
+
+        -- PARTIALLY DELIVER RECORDS
         SELECT
             'Sales Order' AS doctype_name,
 
@@ -164,29 +161,56 @@ def get_sales_order_data(filters):
             so.transaction_date AS posting_date,
             so.status,
 
-            CASE
-                WHEN so.status = 'Partially Deliver'
-                THEN soi.item_code
-                ELSE ''
-            END AS item_code,
+            soi.item_code,
+            soi.qty,
+            soi.custom_delivery_qty,
+            soi.custom_balance_qty,
+
+            '' AS sales_order,
+            '' AS delivery_note,
 
             CASE
-                WHEN so.status = 'Partially Deliver'
-                THEN soi.qty
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY so.name
+                    ORDER BY soi.idx
+                ) = 1
+                THEN so.grand_total
                 ELSE NULL
-            END AS qty,
+            END AS grand_total,
 
             CASE
-                WHEN so.status = 'Partially Deliver'
-                THEN soi.custom_delivery_qty
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY so.name
+                    ORDER BY soi.idx
+                ) = 1
+                THEN so.rounded_total
                 ELSE NULL
-            END AS custom_delivery_qty,
+            END AS rounded_total
 
-            CASE
-                WHEN so.status = 'Partially Deliver'
-                THEN soi.custom_balance_qty
-                ELSE NULL
-            END AS custom_balance_qty,
+        FROM `tabSales Order` so
+
+        LEFT JOIN `tabSales Order Item` soi
+            ON so.name = soi.parent
+
+        WHERE so.docstatus != 2
+        AND so.status = 'Partially Deliver'
+        {conditions}
+
+        UNION ALL
+
+        -- OTHER STATUS RECORDS
+        SELECT
+            'Sales Order' AS doctype_name,
+
+            so.name,
+            so.customer,
+            so.transaction_date AS posting_date,
+            so.status,
+
+            '' AS item_code,
+            NULL AS qty,
+            NULL AS custom_delivery_qty,
+            NULL AS custom_balance_qty,
 
             '' AS sales_order,
             '' AS delivery_note,
@@ -196,11 +220,11 @@ def get_sales_order_data(filters):
 
         FROM `tabSales Order` so
 
-        LEFT JOIN `tabSales Order Item` soi
-            ON so.name = soi.parent
-
         WHERE so.docstatus != 2
+        AND so.status != 'Partially Deliver'
         {conditions}
+
+        ORDER BY posting_date ASC
 
     """, as_dict=1)
 

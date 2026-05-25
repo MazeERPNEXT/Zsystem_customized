@@ -147,7 +147,10 @@ doc_events = {
     "Delivery Note": {
         "on_submit": "zsystem_customize.sales_order.update_sales_order_delivery_qty",
         "on_cancel": "zsystem_customize.sales_order.update_sales_order_delivery_qty"
-    }
+    },
+    "Sales Order": {
+        "validate": "zsystem_customize.sales_order.update_sales_order_balance_qty"
+    },
 #     "Sales Order": {
 #         "before_submit": "zsystem_customize.sales_order.validate_so_stock"
 #     }

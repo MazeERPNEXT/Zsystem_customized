@@ -198,10 +198,48 @@ def create_amended_with_revision(sales_order):
     return {
         "name": new_doc.name
     }
-
+ 
 # //Sales order to DC update delivery qty
 
 import frappe
+
+# =========================================================
+# SALES ORDER SAVE
+# =========================================================
+
+def update_sales_order_balance_qty(doc, method=None):
+
+    for item in doc.items:
+
+        # Ordered Qty
+        qty = item.qty or 0
+
+        # Delivered Qty
+        delivered_qty = item.custom_delivery_qty or 0
+
+        # Balance Qty
+        balance_qty = qty - delivered_qty
+
+        if balance_qty < 0:
+            balance_qty = 0
+
+        # Set Values
+        item.custom_balance_qty = balance_qty
+
+        # Delivery Status
+        if delivered_qty == 0:
+            item.custom_delivery_status = "Not Delivered"
+
+        elif delivered_qty < qty:
+            item.custom_delivery_status = "Partially Delivered"
+
+        else:
+            item.custom_delivery_status = "Delivered"
+
+
+# =========================================================
+# DELIVERY NOTE SUBMIT / CANCEL
+# =========================================================
 
 def update_sales_order_delivery_qty(doc, method=None):
 
@@ -241,6 +279,7 @@ def update_sales_order_delivery_qty(doc, method=None):
         # -------------------------------------------------
 
         if doc.docstatus == 2:
+
             # Delivery Note Cancel
             new_delivery_qty = current_delivery_qty - qty
 
@@ -248,10 +287,11 @@ def update_sales_order_delivery_qty(doc, method=None):
                 new_delivery_qty = 0
 
         else:
+
             # Delivery Note Submit
             new_delivery_qty = current_delivery_qty + qty
 
-        # Balance qty
+        # Balance Qty
         balance_qty = so_qty - new_delivery_qty
 
         if balance_qty < 0:
@@ -259,15 +299,18 @@ def update_sales_order_delivery_qty(doc, method=None):
 
         # Delivery Status
         if new_delivery_qty == 0:
+
             delivery_status = "Pending"
 
         elif new_delivery_qty < so_qty:
+
             delivery_status = "Partially Delivered"
 
         else:
+
             delivery_status = "Delivered"
 
-        # Update fields
+        # Update SO Item
         frappe.db.set_value(
             "Sales Order Item",
             so_detail,

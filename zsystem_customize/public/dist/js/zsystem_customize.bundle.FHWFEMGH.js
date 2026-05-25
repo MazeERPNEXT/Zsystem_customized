@@ -314,11 +314,25 @@
       set_sales_person_by_user2(frm);
       set_fiscal_year_prefix2(frm);
       set_custom_quotation_no(frm);
+      if (!frm.doc.custom_created_by) {
+        frappe.db.get_value(
+          "User",
+          frappe.session.user,
+          "full_name"
+        ).then((r) => {
+          if (r.message) {
+            frm.set_value("custom_created_by", r.message.full_name);
+          }
+        });
+      }
     },
     custom_sales_person(frm) {
       if (frm.doc.__islocal) {
         set_naming_series2(frm);
       }
+    },
+    custom_quotation_no(frm) {
+      set_naming_series2(frm);
     },
     refresh: function(frm) {
       set_custom_quotation_no(frm);
@@ -397,7 +411,7 @@
     }
   }
   function set_sales_person_by_user2(frm) {
-    if (!frm.doc.__islocal)
+    if (!frm.is_new())
       return;
     const user_map = {
       "Rajarajan": "Rajarajan",
@@ -412,12 +426,10 @@
     const options = frm.fields_dict.custom_sales_person.df.options || "";
     if (options.includes(sp)) {
       frm.set_value("custom_sales_person", sp);
-    } else {
-      frappe.msgprint(`\u26A0\uFE0F '${sp}' not available in Sales Person options`);
     }
   }
   function set_fiscal_year_prefix2(frm) {
-    if (!frm.doc.__islocal || frm.fy_code)
+    if (!frm.is_new())
       return;
     frappe.call({
       method: "frappe.client.get_list",
@@ -427,7 +439,7 @@
         order_by: "year_start_date desc",
         limit_page_length: 1
       },
-      callback(r) {
+      callback: function(r) {
         if (!r.message || !r.message.length)
           return;
         let fy = r.message[0].name;
@@ -440,17 +452,15 @@
     });
   }
   function set_naming_series2(frm) {
-    if (!frm.doc.__islocal)
+    if (!frm.is_new())
       return;
     if (!frm.fy_code)
       return;
     const sp = frm.doc.custom_sales_person;
     const quote_no = frm.doc.custom_quotation_no;
-    if (!quote_no)
+    if (!sp || !quote_no)
       return;
     const qn = quote_no.slice(-4);
-    if (!sp)
-      return;
     const person_code = {
       "Chandru": "CR",
       "Rajarajan": "MR",
@@ -458,10 +468,8 @@
     }[sp];
     if (!person_code)
       return;
-    frm.set_value(
-      "naming_series",
-      `${frm.fy_code}-${person_code}-${qn}-.####`
-    );
+    const naming_series = `${frm.fy_code}-${person_code}-${qn}-.####`;
+    frm.set_value("naming_series", naming_series);
   }
   frappe.ui.form.on("Sales Order Item", {
     item_code(frm, cdt, cdn) {
@@ -872,4 +880,4 @@
     }
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.ZGFE3JL3.js.map
+//# sourceMappingURL=zsystem_customize.bundle.FHWFEMGH.js.map
