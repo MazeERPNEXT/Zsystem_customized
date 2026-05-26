@@ -824,6 +824,11 @@
           __("Return DC"),
           "orange"
         );
+      } else if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1 && frm.doc.status === "Return Issued") {
+        frm.page.set_indicator(
+          __("Return Issued"),
+          "grey"
+        );
       } else if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1 && flt(frm.doc.per_billed) >= 100) {
         frm.page.set_indicator(
           __("Completed"),
@@ -843,9 +848,16 @@
           frm.doc.name,
           "status",
           "Return DC"
-        ).then(() => {
-          frm.reload_doc();
-        });
+        );
+        if (frm.doc.return_against) {
+          frappe.db.set_value(
+            "Delivery Note",
+            frm.doc.return_against,
+            "status",
+            "Return Issued"
+          );
+        }
+        frm.reload_doc();
       } else if (frm.doc.custom_returnable_dc == 1) {
         frappe.db.set_value(
           "Delivery Note",
@@ -880,4 +892,4 @@
     }
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.FHWFEMGH.js.map
+//# sourceMappingURL=zsystem_customize.bundle.SA7YEUY7.js.map

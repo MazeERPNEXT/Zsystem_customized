@@ -65,7 +65,7 @@ frappe.query_reports["Overall Stock Report"] = {
 			fieldname: "voucher_type",
 			label: __("Voucher Type"),
 			fieldtype: "Select",
-			options: "\nStock Entry\nStock Reconciliation\nSales Invoice\nPurchase Invoice\nDelivery Note\nPurchase Receipt",
+			options: "\nStock Entry\nStock Reconciliation\nPurchase Invoice\nDelivery Note\nPurchase Receipt",
 		},
 	],
 	formatter: function (value, row, column, data, default_formatter) {

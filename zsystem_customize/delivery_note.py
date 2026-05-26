@@ -11,6 +11,10 @@ class CustomDeliveryNote(DeliveryNote):
             if self.is_return:
                 return "Return DC"
 
+            # Check if return created against this DN
+            if self.has_return_against():
+                return "Return Issued"
+
             # Completed after Sales Invoice is linked
             if self.per_billed >= 100:
                 return "Completed"
@@ -27,6 +31,10 @@ class CustomDeliveryNote(DeliveryNote):
             # Most specific first: Return DC
             if self.is_return:
                 new_status = "Return DC"
+
+            # Check return created
+            elif self.has_return_against():
+                new_status = "Return Issued"
 
             # Completed after Sales Invoice is linked
             elif self.per_billed >= 100:
@@ -51,9 +59,25 @@ class CustomDeliveryNote(DeliveryNote):
 
             if self.is_return:
                 status = "Return DC"
+
+            elif self.has_return_against():
+                status = "Return Issued"
+
             elif self.per_billed >= 100:
                 status = "Completed"
+
             else:
                 status = "Returnable DC"
 
         super().update_status(status, update_modified)
+
+    def has_return_against(self):
+
+        return frappe.db.exists(
+            "Delivery Note",
+            {
+                "is_return": 1,
+                "return_against": self.name,
+                "docstatus": 1
+            }
+        )

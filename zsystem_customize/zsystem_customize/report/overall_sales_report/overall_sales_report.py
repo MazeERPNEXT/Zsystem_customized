@@ -277,31 +277,51 @@ def get_returnable_dc_data(filters):
         conditions += f" AND dn.posting_date <= '{filters.get('to_date')}' "
 
     return frappe.db.sql(f"""
+
         SELECT
             'Delivery Note' AS doctype_name,
+
             dn.name,
             dn.customer,
             dn.posting_date,
             dn.status,
 
-            GROUP_CONCAT(
-                DISTINCT dni.against_sales_order
-            ) AS sales_order,
+            dni.against_sales_order AS sales_order,
+
+            dni.item_code,
+            dni.qty,
 
             '' AS delivery_note,
 
-            dn.grand_total,
-            dn.rounded_total
+            CASE
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY dn.name
+                    ORDER BY dni.idx
+                ) = 1
+                THEN dn.grand_total
+                ELSE NULL
+            END AS grand_total,
+
+            CASE
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY dn.name
+                    ORDER BY dni.idx
+                ) = 1
+                THEN dn.rounded_total
+                ELSE NULL
+            END AS rounded_total
 
         FROM `tabDelivery Note` dn
 
         LEFT JOIN `tabDelivery Note Item` dni
             ON dn.name = dni.parent
 
-        WHERE dn.docstatus != 2 AND dn.custom_returnable_dc = 1
+        WHERE dn.docstatus != 2
+        AND dn.custom_returnable_dc = 1
         {conditions}
 
-        GROUP BY dn.name
+        ORDER BY dn.posting_date ASC, dn.name ASC, dni.idx ASC
+
     """, as_dict=1)
 
 def get_sales_invoice_data(filters):

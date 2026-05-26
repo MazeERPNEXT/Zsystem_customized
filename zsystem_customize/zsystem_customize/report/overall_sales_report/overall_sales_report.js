@@ -80,8 +80,9 @@ frappe.query_reports["Overall Sales Report"] = {
 
                     options = [
                         "",
-                        "Return DC",
                         "Returnable DC",
+                        "Return DC",
+                        "Return Issued",
                         "Completed",
                     ];
                 }

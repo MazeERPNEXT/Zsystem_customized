@@ -23,7 +23,21 @@ frappe.ui.form.on("Delivery Note", {
 
         }
 
-        // Completed after billing
+        // Return Issued
+        else if (
+            frm.doc.docstatus === 1 &&
+            frm.doc.custom_returnable_dc == 1 &&
+            frm.doc.status === "Return Issued"
+        ) {
+
+            frm.page.set_indicator(
+                __("Return Issued"),
+                "grey"
+            );
+
+        }
+
+        // Completed
         else if (
             frm.doc.docstatus === 1 &&
             frm.doc.custom_returnable_dc == 1 &&
@@ -53,24 +67,35 @@ frappe.ui.form.on("Delivery Note", {
 
     on_submit(frm) {
 
-        // Return DC
+        // Return DC document
         if (
             frm.doc.custom_returnable_dc == 1 &&
             frm.doc.is_return == 1
         ) {
 
+            // Set current document as Return DC
             frappe.db.set_value(
                 "Delivery Note",
                 frm.doc.name,
                 "status",
                 "Return DC"
-            ).then(() => {
-                frm.reload_doc();
-            });
+            );
 
+            // Update original DN as Return Issued
+            if (frm.doc.return_against) {
+
+                frappe.db.set_value(
+                    "Delivery Note",
+                    frm.doc.return_against,
+                    "status",
+                    "Return Issued"
+                );
+            }
+
+            frm.reload_doc();
         }
 
-        // Returnable DC
+        // Normal Returnable DC
         else if (frm.doc.custom_returnable_dc == 1) {
 
             frappe.db.set_value(
