@@ -1,7 +1,7 @@
 import frappe
 from erpnext.stock.doctype.delivery_note.delivery_note import DeliveryNote
 
-class CustomDeliveryNote(DeliveryNote):
+class CustomDeliveryNotes(DeliveryNote):
 
     def get_status(self):
 
