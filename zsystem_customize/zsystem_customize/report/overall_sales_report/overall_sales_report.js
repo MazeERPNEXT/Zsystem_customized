@@ -58,8 +58,7 @@ frappe.query_reports["Overall Sales Report"] = {
                         "Paid",
                         "Partly Paid",
                         "Unpaid",
-                        "Overdue",
-                        "Cancelled"
+                        "Overdue"                        
                     ];
                 }
 
