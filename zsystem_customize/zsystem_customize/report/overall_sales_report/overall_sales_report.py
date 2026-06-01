@@ -46,18 +46,6 @@ def get_columns():
             "width": 180
         },
         {
-            "label": "Grand Total",
-            "fieldname": "grand_total",
-            "fieldtype": "Currency",
-            "width": 140
-        },
-        {
-            "label": "Rounded Total",
-            "fieldname": "rounded_total",
-            "fieldtype": "Currency",
-            "width": 140
-        },
-        {
             "label": "Item Code",
             "fieldname": "item_code",
             "fieldtype": "Link",
@@ -83,6 +71,24 @@ def get_columns():
             "width": 140
         },
         {
+            "label": "Grand Total",
+            "fieldname": "grand_total",
+            "fieldtype": "Currency",
+            "width": 140
+        },
+        {
+            "label": "Rounded Total",
+            "fieldname": "rounded_total",
+            "fieldtype": "Currency",
+            "width": 140
+        },
+          {
+            "label": "Sales Person",
+            "fieldname": "custom_sales_person",
+            "fieldtype": "Data",
+            "width": 180
+        },
+        {
             "label": "Sales Order",
             "fieldname": "sales_order",
             "fieldtype": "Link",
@@ -94,6 +100,12 @@ def get_columns():
             "fieldname": "delivery_note",
             "fieldtype": "Link",
             "options": "Delivery Note",
+            "width": 180
+        },
+        {
+            "label": "Created By",
+            "fieldname": "custom_created_by",
+            "fieldtype": "Data",
             "width": 180
         },
     ]
@@ -144,87 +156,65 @@ def get_sales_order_data(filters):
 
     conditions = get_common_conditions(filters, "so")
 
-    if filters.get("from_date"):
-        conditions += f" AND so.transaction_date >= '{filters.get('from_date')}' "
-
-    if filters.get("to_date"):
-        conditions += f" AND so.transaction_date <= '{filters.get('to_date')}' "
-
     return frappe.db.sql(f"""
+        SELECT * FROM (
+            SELECT
+                'Sales Order' AS doctype_name,
 
-        -- PARTIALLY DELIVER RECORDS
-        SELECT
-            'Sales Order' AS doctype_name,
+                so.name,
+                so.customer,
+                so.transaction_date AS posting_date,
+                so.status,
+                so.custom_created_by,
+                so.custom_sales_person,
 
-            so.name,
-            so.customer,
-            so.transaction_date AS posting_date,
-            so.status,
+                soi.item_code,
+                soi.qty,
 
-            soi.item_code,
-            soi.qty,
-            soi.custom_delivery_qty,
-            soi.custom_balance_qty,
+                COALESCE(soi.custom_delivery_qty, 0) AS custom_delivery_qty,
+                COALESCE(soi.custom_balance_qty, 0) AS custom_balance_qty,
 
-            '' AS sales_order,
-            '' AS delivery_note,
+                '' AS sales_order,
+                '' AS delivery_note,
 
-            CASE
-                WHEN ROW_NUMBER() OVER (
-                    PARTITION BY so.name
-                    ORDER BY soi.idx
-                ) = 1
-                THEN so.grand_total
-                ELSE NULL
-            END AS grand_total,
+                CASE
+                    WHEN ROW_NUMBER() OVER (
+                        PARTITION BY so.name
+                        ORDER BY soi.idx
+                    ) = 1
+                    THEN so.grand_total
+                    ELSE NULL
+                END AS grand_total,
 
-            CASE
-                WHEN ROW_NUMBER() OVER (
-                    PARTITION BY so.name
-                    ORDER BY soi.idx
-                ) = 1
-                THEN so.rounded_total
-                ELSE NULL
-            END AS rounded_total
+                CASE
+                    WHEN ROW_NUMBER() OVER (
+                        PARTITION BY so.name
+                        ORDER BY soi.idx
+                    ) = 1
+                    THEN so.rounded_total
+                    ELSE NULL
+                END AS rounded_total
 
-        FROM `tabSales Order` so
+            FROM `tabSales Order` so
+            LEFT JOIN `tabSales Order Item` soi
+                ON so.name = soi.parent
 
-        LEFT JOIN `tabSales Order Item` soi
-            ON so.name = soi.parent
+            WHERE so.docstatus != 2
+            {conditions}
 
-        WHERE so.docstatus != 2
-        AND so.status = 'Partially Deliver'
-        {conditions}
+            ORDER BY
+                so.transaction_date,
+                so.name,
+                soi.idx
+        ) AS subquery
 
-        UNION ALL
-
-        -- OTHER STATUS RECORDS
-        SELECT
-            'Sales Order' AS doctype_name,
-
-            so.name,
-            so.customer,
-            so.transaction_date AS posting_date,
-            so.status,
-
-            '' AS item_code,
-            NULL AS qty,
-            NULL AS custom_delivery_qty,
-            NULL AS custom_balance_qty,
-
-            '' AS sales_order,
-            '' AS delivery_note,
-
-            so.grand_total,
-            so.rounded_total
-
-        FROM `tabSales Order` so
-
-        WHERE so.docstatus != 2
-        AND so.status != 'Partially Deliver'
-        {conditions}
-
-        ORDER BY posting_date ASC
+        WHERE (
+            subquery.status != 'Partially Deliver'
+            OR (
+                subquery.status = 'Partially Deliver'
+                AND subquery.custom_delivery_qty != subquery.qty
+            )
+        )
 
     """, as_dict=1)
 
@@ -241,29 +231,52 @@ def get_delivery_note_data(filters):
     return frappe.db.sql(f"""
         SELECT
             'Delivery Note' AS doctype_name,
+
             dn.name,
             dn.customer,
             dn.posting_date,
             dn.status,
+            dn.custom_created_by,
+            dn.custom_sales_person,
 
-            GROUP_CONCAT(
-                DISTINCT dni.against_sales_order
-            ) AS sales_order,
+            dni.item_code,
+            dni.qty,
+
+            NULL AS custom_delivery_qty,
+            NULL AS custom_balance_qty,
+
+            dni.against_sales_order AS sales_order,
 
             '' AS delivery_note,
 
-            dn.grand_total,
-            dn.rounded_total
+            CASE
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY dn.name
+                    ORDER BY dni.idx
+                ) = 1
+                THEN dn.grand_total
+                ELSE NULL
+            END AS grand_total,
+
+            CASE
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY dn.name
+                    ORDER BY dni.idx
+                ) = 1
+                THEN dn.rounded_total
+                ELSE NULL
+            END AS rounded_total
 
         FROM `tabDelivery Note` dn
 
         LEFT JOIN `tabDelivery Note Item` dni
             ON dn.name = dni.parent
 
-        WHERE dn.docstatus != 2 AND dn.custom_returnable_dc != 1
+        WHERE dn.docstatus != 2
+        AND dn.custom_returnable_dc != 1
         {conditions}
 
-        GROUP BY dn.name
+        ORDER BY dn.posting_date, dn.name, dni.idx
     """, as_dict=1)
 
 def get_returnable_dc_data(filters):
@@ -277,19 +290,23 @@ def get_returnable_dc_data(filters):
         conditions += f" AND dn.posting_date <= '{filters.get('to_date')}' "
 
     return frappe.db.sql(f"""
-
         SELECT
-            'Delivery Note' AS doctype_name,
+            'Returnable DC' AS doctype_name,
 
             dn.name,
             dn.customer,
             dn.posting_date,
             dn.status,
-
-            dni.against_sales_order AS sales_order,
+            dn.custom_created_by,
+            dn.custom_sales_person,
 
             dni.item_code,
             dni.qty,
+
+            NULL AS custom_delivery_qty,
+            NULL AS custom_balance_qty,
+
+            dni.against_sales_order AS sales_order,
 
             '' AS delivery_note,
 
@@ -320,8 +337,7 @@ def get_returnable_dc_data(filters):
         AND dn.custom_returnable_dc = 1
         {conditions}
 
-        ORDER BY dn.posting_date ASC, dn.name ASC, dni.idx ASC
-
+        ORDER BY dn.posting_date, dn.name, dni.idx
     """, as_dict=1)
 
 def get_sales_invoice_data(filters):
@@ -342,17 +358,35 @@ def get_sales_invoice_data(filters):
             si.customer,
             si.posting_date,
             si.status,
+            si.custom_created_by,
+            si.custom_sales_person,
 
-            GROUP_CONCAT(
-                DISTINCT sii.sales_order
-            ) AS sales_order,
+            sii.item_code,
+            sii.qty,
 
-            GROUP_CONCAT(
-                DISTINCT sii.delivery_note
-            ) AS delivery_note,
+            NULL AS custom_delivery_qty,
+            NULL AS custom_balance_qty,
 
-            si.grand_total,
-            si.rounded_total
+            sii.sales_order AS sales_order,
+            sii.delivery_note,
+
+            CASE
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY si.name
+                    ORDER BY sii.idx
+                ) = 1
+                THEN si.grand_total
+                ELSE NULL
+            END AS grand_total,
+
+            CASE
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY si.name
+                    ORDER BY sii.idx
+                ) = 1
+                THEN si.rounded_total
+                ELSE NULL
+            END AS rounded_total
 
         FROM `tabSales Invoice` si
 
@@ -362,5 +396,5 @@ def get_sales_invoice_data(filters):
         WHERE si.docstatus != 2
         {conditions}
 
-        GROUP BY si.name
+        ORDER BY si.posting_date, si.name, sii.idx
     """, as_dict=1)

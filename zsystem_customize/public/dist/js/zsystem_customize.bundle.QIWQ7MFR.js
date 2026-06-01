@@ -214,6 +214,11 @@
         return;
       set_sales_person_by_user(frm);
       set_fiscal_year_prefix(frm);
+      if (frm.is_new() && !frm.doc.custom_created_by) {
+        frappe.db.set_value("User", frappe.session.user, "full_name").then((r) => {
+          frm.set_value("custom_created_by", r.message.full_name);
+        });
+      }
     },
     custom_sales_person(frm) {
       if (frm.doc.__islocal) {
@@ -314,8 +319,8 @@
       set_sales_person_by_user2(frm);
       set_fiscal_year_prefix2(frm);
       set_custom_quotation_no(frm);
-      if (!frm.doc.custom_created_by) {
-        frappe.db.get_value(
+      if (frm.is_new() && !frm.doc.custom_created_by) {
+        frappe.db.set_value(
           "User",
           frappe.session.user,
           "full_name"
@@ -337,7 +342,6 @@
     refresh: function(frm) {
       set_custom_quotation_no(frm);
       frm.custom_cancel_amend_added = false;
-      frm.page.clear_actions_menu();
       $(".page-actions .btn:contains('Cancel & Amend')").remove();
       if (frm.doc.docstatus === 1) {
         frm.page.btn_secondary && frm.page.btn_secondary.hide();
@@ -790,6 +794,13 @@
           frm.doc.custom_income_account
         );
       });
+    },
+    onload: function(frm) {
+      if (frm.is_new() && !frm.doc.custom_created_by) {
+        frappe.db.set_value("User", frappe.session.user, "full_name").then((r) => {
+          frm.set_value("custom_created_by", r.message.full_name);
+        });
+      }
     }
   });
 
@@ -839,6 +850,13 @@
           __("Returnable DC"),
           "orange"
         );
+      }
+    },
+    onload: function(frm) {
+      if (frm.is_new() && !frm.doc.custom_created_by) {
+        frappe.db.set_value("User", frappe.session.user, "full_name").then((r) => {
+          frm.set_value("custom_created_by", r.message.full_name);
+        });
       }
     },
     on_submit(frm) {
@@ -892,4 +910,4 @@
     }
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.SA7YEUY7.js.map
+//# sourceMappingURL=zsystem_customize.bundle.QIWQ7MFR.js.map

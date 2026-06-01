@@ -45,7 +45,7 @@ frappe.query_reports["Overall Sales Report"] = {
                         "To Bill",
                         "Partially Deliver",
                         "Completed",
-                        "Cancelled"
+                        // "Cancelled"
                     ];
                 }
 
@@ -68,6 +68,7 @@ frappe.query_reports["Overall Sales Report"] = {
                     options = [
                         "",
                         "Draft",
+                        "To Bill",
                         "Return Issued",
                         "Completed",
 						"Return"

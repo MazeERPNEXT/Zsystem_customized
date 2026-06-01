@@ -64,6 +64,13 @@ frappe.ui.form.on("Delivery Note", {
 
         }
     },
+    onload:function(frm) {
+        if(frm.is_new() && !frm.doc.custom_created_by){
+            frappe.db.set_value("User",frappe.session.user,"full_name").then(r => {
+                frm.set_value("custom_created_by",r.message.full_name);
+            })
+        }
+    },
 
     on_submit(frm) {
 
@@ -107,5 +114,5 @@ frappe.ui.form.on("Delivery Note", {
                 frm.reload_doc();
             });
         }
-    }
+    },
 });

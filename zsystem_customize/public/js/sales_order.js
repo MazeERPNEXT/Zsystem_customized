@@ -5,8 +5,8 @@ frappe.ui.form.on("Sales Order",{
         set_fiscal_year_prefix(frm);
         set_custom_quotation_no(frm);
         //set value based login user
-        if (!frm.doc.custom_created_by) {
-            frappe.db.get_value(
+        if (frm.is_new() && !frm.doc.custom_created_by) {
+            frappe.db.set_value(
                 "User",
                 frappe.session.user,
                 "full_name"
@@ -32,7 +32,7 @@ frappe.ui.form.on("Sales Order",{
          frm.custom_cancel_amend_added = false;
 
         // Remove any existing Cancel & Amend button
-        frm.page.clear_actions_menu();
+        // frm.page.clear_actions_menu();
         $(".page-actions .btn:contains('Cancel & Amend')").remove();
 
         // ✅ ONLY for Submitted documents

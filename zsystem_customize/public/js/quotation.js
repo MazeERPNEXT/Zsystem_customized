@@ -8,6 +8,12 @@ frappe.ui.form.on("Quotation", {
 
         set_sales_person_by_user(frm);
         set_fiscal_year_prefix(frm);
+        //auto set session user as created by
+        if(frm.is_new() && !frm.doc.custom_created_by){
+            frappe.db.set_value("User",frappe.session.user,"full_name").then(r =>{
+                frm.set_value("custom_created_by",r.message.full_name);
+            })
+        }
     },
 
     // --------------------------------------------------
