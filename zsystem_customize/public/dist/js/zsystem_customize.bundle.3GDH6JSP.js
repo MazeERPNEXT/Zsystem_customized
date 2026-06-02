@@ -320,7 +320,7 @@
       set_fiscal_year_prefix2(frm);
       set_custom_quotation_no(frm);
       if (frm.is_new() && !frm.doc.custom_created_by) {
-        frappe.db.set_value(
+        frappe.db.get_value(
           "User",
           frappe.session.user,
           "full_name"
@@ -340,6 +340,7 @@
       set_naming_series2(frm);
     },
     refresh: function(frm) {
+      frm.fields_dict.custom_created_by.$wrapper.find(".control-value").css("color", "black");
       set_custom_quotation_no(frm);
       frm.custom_cancel_amend_added = false;
       $(".page-actions .btn:contains('Cancel & Amend')").remove();
@@ -802,10 +803,19 @@
     },
     onload: function(frm) {
       if (frm.is_new() && !frm.doc.custom_created_by) {
-        frappe.db.set_value("User", frappe.session.user, "full_name").then((r) => {
-          frm.set_value("custom_created_by", r.message.full_name);
+        frappe.db.get_value(
+          "User",
+          frappe.session.user,
+          "full_name"
+        ).then((r) => {
+          if (r.message) {
+            frm.set_value("custom_created_by", r.message.full_name);
+          }
         });
       }
+    },
+    refresh: function(frm) {
+      frm.fields_dict.custom_created_by.$wrapper.find(".control-value").css("color", "black");
     }
   });
 
@@ -838,6 +848,7 @@
   });
   frappe.ui.form.on("Delivery Note", {
     refresh(frm) {
+      frm.fields_dict.custom_created_by.$wrapper.find(".control-value").css("color", "black");
       if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
         frm.page.set_indicator(
           __("Return DC"),
@@ -862,7 +873,7 @@
     },
     onload: function(frm) {
       if (frm.is_new() && !frm.doc.custom_created_by) {
-        frappe.db.set_value(
+        frappe.db.get_value(
           "User",
           frappe.session.user,
           "full_name"
@@ -872,15 +883,6 @@
           }
         });
       }
-    },
-    custom_created_by: function(frm) {
-      frappe.db.get_value(
-        "User",
-        frm.doc.custom_created_by,
-        "full_name"
-      ).then((r) => {
-        frm.set_value("custom_created_by", r.message.full_name);
-      });
     },
     on_submit(frm) {
       if (frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
@@ -933,4 +935,4 @@
     }
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.T7PKA5B5.js.map
+//# sourceMappingURL=zsystem_customize.bundle.3GDH6JSP.js.map

@@ -13,6 +13,9 @@ frappe.ui.form.on("Delivery Note Item",{
 frappe.ui.form.on("Delivery Note", {
 
     refresh(frm) {
+        frm.fields_dict.custom_created_by.$wrapper
+            .find('.control-value')
+            .css('color', 'black');
 
         // Return DC
         if (
@@ -71,8 +74,8 @@ frappe.ui.form.on("Delivery Note", {
     },
     
     onload: function(frm) {
-       if (frm.is_new() && !frm.doc.custom_created_by) {
-            frappe.db.set_value(
+        if (frm.is_new() && !frm.doc.custom_created_by) {
+            frappe.db.get_value(
                 "User",
                 frappe.session.user,
                 "full_name"
@@ -83,16 +86,6 @@ frappe.ui.form.on("Delivery Note", {
             });
         }
     },
-    custom_created_by: function(frm) {
-        frappe.db.get_value(
-            "User",
-            frm.doc.custom_created_by,
-            "full_name"
-        ).then(r => {
-            frm.set_value("custom_created_by", r.message.full_name);
-        });
-    },
-
     on_submit(frm) {
 
         // Return DC document

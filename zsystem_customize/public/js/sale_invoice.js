@@ -11,12 +11,22 @@ frappe.ui.form.on("Sales Invoice",{
             );
         });
     },
-    onload:function(frm){
-        if(frm.is_new() && !frm.doc.custom_created_by){
-            frappe.db.set_value("User",frappe.session.user,"full_name").then(r =>{
-                frm.set_value("custom_created_by",r.message.full_name);
-            })
-
+    onload: function(frm) {
+        if (frm.is_new() && !frm.doc.custom_created_by) {
+            frappe.db.get_value(
+                "User",
+                frappe.session.user,
+                "full_name"
+            ).then(r => {
+                if (r.message) {
+                    frm.set_value("custom_created_by", r.message.full_name);
+                }
+            });
         }
+    },
+    refresh: function(frm){
+        frm.fields_dict.custom_created_by.$wrapper
+            .find('.control-value')
+            .css('color', 'black');
     }
 });

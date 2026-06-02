@@ -6,7 +6,7 @@ frappe.ui.form.on("Sales Order",{
         set_custom_quotation_no(frm);
         //set value based login user
         if (frm.is_new() && !frm.doc.custom_created_by) {
-            frappe.db.set_value(
+            frappe.db.get_value(
                 "User",
                 frappe.session.user,
                 "full_name"
@@ -28,6 +28,9 @@ frappe.ui.form.on("Sales Order",{
         set_naming_series(frm);
     },
     refresh: function (frm) {
+        frm.fields_dict.custom_created_by.$wrapper
+            .find('.control-value')
+            .css('color', 'black');
         set_custom_quotation_no(frm);
          frm.custom_cancel_amend_added = false;
 
