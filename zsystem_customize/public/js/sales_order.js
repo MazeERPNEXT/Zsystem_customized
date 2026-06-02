@@ -219,6 +219,11 @@ function set_naming_series(frm) {
 frappe.ui.form.on("Sales Order Item", {
     item_code(frm, cdt, cdn) {
         fetch_last_sales_order_details(frm, cdt, cdn);
+        setTimeout(function() {
+            frappe.model.set_value(cdt, cdn, 'rate', 0);
+            frappe.model.set_value(cdt, cdn, 'price_list_rate', 0);
+            frappe.model.set_value(cdt, cdn, 'base_price_list_rate', 0);
+        }, 1000);
     }
 });
 

@@ -128,6 +128,17 @@ frappe.query_reports["Overall Sales Report"] = {
             label: "Status",
             fieldtype: "Select",
             options: [""]
+        },
+        {
+            fieldname :"custom_sales_person",
+            label :"Sales person",
+            fieldtype:"Link",
+            options:"Sales Person"
+        },
+        {
+            fieldname : "po_no",
+            label : "Customer Purchase Order",
+            fieldtype :"Data",
         }
     ]
 };

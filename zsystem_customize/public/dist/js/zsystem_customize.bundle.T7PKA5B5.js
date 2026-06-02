@@ -478,6 +478,11 @@
   frappe.ui.form.on("Sales Order Item", {
     item_code(frm, cdt, cdn) {
       fetch_last_sales_order_details(frm, cdt, cdn);
+      setTimeout(function() {
+        frappe.model.set_value(cdt, cdn, "rate", 0);
+        frappe.model.set_value(cdt, cdn, "price_list_rate", 0);
+        frappe.model.set_value(cdt, cdn, "base_price_list_rate", 0);
+      }, 1e3);
     }
   });
   function fetch_last_sales_order_details(frm, cdt, cdn) {
@@ -826,6 +831,9 @@
       locals[cdt][cdn].use_serial_batch_fields = 1;
       frappe.flags.dialog_set = false;
       frappe.flags.hide_serial_batch_dialog = false;
+      setTimeout(function() {
+        frappe.model.set_value(cdt, cdn, "rate", 0);
+      }, 1e3);
     }
   });
   frappe.ui.form.on("Delivery Note", {
@@ -854,10 +862,25 @@
     },
     onload: function(frm) {
       if (frm.is_new() && !frm.doc.custom_created_by) {
-        frappe.db.set_value("User", frappe.session.user, "full_name").then((r) => {
-          frm.set_value("custom_created_by", r.message.full_name);
+        frappe.db.set_value(
+          "User",
+          frappe.session.user,
+          "full_name"
+        ).then((r) => {
+          if (r.message) {
+            frm.set_value("custom_created_by", r.message.full_name);
+          }
         });
       }
+    },
+    custom_created_by: function(frm) {
+      frappe.db.get_value(
+        "User",
+        frm.doc.custom_created_by,
+        "full_name"
+      ).then((r) => {
+        frm.set_value("custom_created_by", r.message.full_name);
+      });
     },
     on_submit(frm) {
       if (frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
@@ -910,4 +933,4 @@
     }
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.QIWQ7MFR.js.map
+//# sourceMappingURL=zsystem_customize.bundle.T7PKA5B5.js.map

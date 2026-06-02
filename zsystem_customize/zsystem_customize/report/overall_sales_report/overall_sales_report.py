@@ -89,6 +89,12 @@ def get_columns():
             "width": 180
         },
         {
+            "label": "Customer Purchase Order",
+            "fieldname": "po_no",
+            "fieldtype": "Data",
+            "width": 180
+        },
+        {
             "label": "Sales Order",
             "fieldname": "sales_order",
             "fieldtype": "Link",
@@ -148,6 +154,14 @@ def get_common_conditions(filters, alias=""):
         conditions += f"""
             AND {prefix}name LIKE '%{filters.get("name")}%'
         """
+    if filters.get("custom_sales_person"):
+        conditions += f"""
+            AND {prefix}custom_sales_person LIKE '%{filters.get("custom_sales_person")}%'
+        """
+    if filters.get("po_no"):
+        conditions += f"""
+            AND {prefix}po_no LIKE '%{filters.get("po_no")}%'
+        """
 
     return conditions
 
@@ -167,6 +181,7 @@ def get_sales_order_data(filters):
                 so.status,
                 so.custom_created_by,
                 so.custom_sales_person,
+                so.po_no,
 
                 soi.item_code,
                 soi.qty,
@@ -238,6 +253,7 @@ def get_delivery_note_data(filters):
             dn.status,
             dn.custom_created_by,
             dn.custom_sales_person,
+            dn.po_no,
 
             dni.item_code,
             dni.qty,
@@ -360,6 +376,7 @@ def get_sales_invoice_data(filters):
             si.status,
             si.custom_created_by,
             si.custom_sales_person,
+            si.po_no,
 
             sii.item_code,
             sii.qty,
