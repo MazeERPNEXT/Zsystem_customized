@@ -169,6 +169,15 @@ def get_common_conditions(filters, alias=""):
 def get_sales_order_data(filters):
 
     conditions = get_common_conditions(filters, "so")
+    if filters.get("from_date"):
+        conditions += f"""
+            AND so.transaction_date >= '{filters.get("from_date")}'
+        """
+
+    if filters.get("to_date"):
+        conditions += f"""
+            AND so.transaction_date <= '{filters.get("to_date")}'
+        """
 
     return frappe.db.sql(f"""
         SELECT * FROM (
