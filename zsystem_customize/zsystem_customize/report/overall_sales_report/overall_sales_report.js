@@ -41,7 +41,7 @@ frappe.query_reports["Overall Sales Report"] = {
                     options = [
                         "",
                         "Draft",
-                        "To Deliver and Bill",
+                        "In Progress",
                         "To Bill",
                         "Partially Deliver",
                         "Completed",

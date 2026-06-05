@@ -5,3 +5,4 @@
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
 zsystem_customize.bin #3
+zsystem_customize.update_so_status #1

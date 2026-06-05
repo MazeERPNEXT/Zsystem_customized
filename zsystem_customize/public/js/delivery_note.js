@@ -13,7 +13,7 @@ frappe.ui.form.on("Delivery Note Item",{
 frappe.ui.form.on("Delivery Note", {
 
     refresh(frm) {
-        frm.fields_dict.custom_created_by.$wrapper
+        frm.fields_dict.custom_modified_by.$wrapper
             .find('.control-value')
             .css('color', 'black');
 
@@ -72,19 +72,17 @@ frappe.ui.form.on("Delivery Note", {
 
         }
     },
-    
-    onload: function(frm) {
-        if (frm.is_new() && !frm.doc.custom_created_by) {
-            frappe.db.get_value(
-                "User",
-                frappe.session.user,
-                "full_name"
-            ).then(r => {
-                if (r.message) {
-                    frm.set_value("custom_created_by", r.message.full_name);
-                }
-            });
-        }
+    after_save: function(frm) {
+        frappe.db.get_value(
+            "User",
+            frm.doc.modified_by,
+            "full_name"
+        ).then(r => {
+            if (r.message) {
+                frm.set_value("custom_modified_by", r.message.full_name);
+                frm.save();
+            }
+        });
     },
     on_submit(frm) {
 

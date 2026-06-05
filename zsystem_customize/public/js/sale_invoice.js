@@ -12,7 +12,7 @@ frappe.ui.form.on("Sales Invoice",{
         });
     },
     onload: function(frm) {
-        if (frm.is_new() && !frm.doc.custom_created_by) {
+        if (frm.is_new() && frm.doc.custom_created_by) {
             frappe.db.get_value(
                 "User",
                 frappe.session.user,

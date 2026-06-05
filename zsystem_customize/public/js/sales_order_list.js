@@ -1,17 +1,21 @@
 frappe.listview_settings['Sales Order'] = {
-    add_fields: ["status","per_delivered"],
+    add_fields: ["status","per_delivered","per_billed"],
 
     get_indicator(doc) {
-
         // Return DC
         if (
             doc.docstatus === 1 &&
-            doc.per_delivered < 100 &&
-            doc.per_delivered > 0
+            doc.per_delivered >  0 &&
+            doc.per_delivered < 100
         ) {
             return [__("Partially Deliver"), "orange"];
         }
-           
+        if (
+            doc.docstatus === 1 &&
+            doc.per_delivered < 100 && doc.per_billed < 100 && doc.status!= "Closed"
+        ) {
+            return [__("In Progress"), "orange"];
+        }   
         // Default indicators
         if (doc.docstatus === 0) {
             return [__("Draft"), "red", "docstatus,=,0"];
@@ -21,10 +25,6 @@ frappe.listview_settings['Sales Order'] = {
 
             if (doc.status === "Completed") {
                 return [__("Completed"), "green", "status,=,Completed"];
-            }
-
-            if (doc.status === "To Deliver and Bill") {
-                return [__("To Deliver and Bill"), "orange", "status,=,To Deliver and Bill"];
             }
              if (doc.status === "To Deliver") {
                 return [__("To Deliver"), "grey", "status,=,To Deliver"];

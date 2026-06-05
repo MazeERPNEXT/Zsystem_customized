@@ -71,6 +71,12 @@ def get_columns():
             "width": 140
         },
         {
+            "label": "Rate",
+            "fieldname": "rate",
+            "fieldtype": "Currency",
+            "width": 140
+        },
+        {
             "label": "Grand Total",
             "fieldname": "grand_total",
             "fieldtype": "Currency",
@@ -193,6 +199,7 @@ def get_sales_order_data(filters):
                 so.po_no,
 
                 soi.item_code,
+                soi.rate,
                 soi.qty,
 
                 COALESCE(soi.custom_delivery_qty, 0) AS custom_delivery_qty,
@@ -265,6 +272,7 @@ def get_delivery_note_data(filters):
             dn.po_no,
 
             dni.item_code,
+            dni.rate,
             dni.qty,
 
             NULL AS custom_delivery_qty,
@@ -326,6 +334,7 @@ def get_returnable_dc_data(filters):
             dn.custom_sales_person,
 
             dni.item_code,
+            dni.rate,
             dni.qty,
 
             NULL AS custom_delivery_qty,
@@ -388,6 +397,7 @@ def get_sales_invoice_data(filters):
             si.po_no,
 
             sii.item_code,
+            sii.rate,
             sii.qty,
 
             NULL AS custom_delivery_qty,

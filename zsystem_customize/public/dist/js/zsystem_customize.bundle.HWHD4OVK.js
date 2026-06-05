@@ -802,7 +802,7 @@
       });
     },
     onload: function(frm) {
-      if (frm.is_new() && !frm.doc.custom_created_by) {
+      if (frm.is_new() && frm.doc.custom_created_by) {
         frappe.db.get_value(
           "User",
           frappe.session.user,
@@ -848,7 +848,7 @@
   });
   frappe.ui.form.on("Delivery Note", {
     refresh(frm) {
-      frm.fields_dict.custom_created_by.$wrapper.find(".control-value").css("color", "black");
+      frm.fields_dict.custom_modified_by.$wrapper.find(".control-value").css("color", "black");
       if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
         frm.page.set_indicator(
           __("Return DC"),
@@ -871,18 +871,17 @@
         );
       }
     },
-    onload: function(frm) {
-      if (frm.is_new() && !frm.doc.custom_created_by) {
-        frappe.db.get_value(
-          "User",
-          frappe.session.user,
-          "full_name"
-        ).then((r) => {
-          if (r.message) {
-            frm.set_value("custom_created_by", r.message.full_name);
-          }
-        });
-      }
+    after_save: function(frm) {
+      frappe.db.get_value(
+        "User",
+        frm.doc.modified_by,
+        "full_name"
+      ).then((r) => {
+        if (r.message) {
+          frm.set_value("custom_modified_by", r.message.full_name);
+          frm.save();
+        }
+      });
     },
     on_submit(frm) {
       if (frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
@@ -935,4 +934,4 @@
     }
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.3GDH6JSP.js.map
+//# sourceMappingURL=zsystem_customize.bundle.HWHD4OVK.js.map
