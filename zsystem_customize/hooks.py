@@ -35,6 +35,7 @@ doctype_js = {
 }
 
 doctype_list_js = {
+    "Customer":"public/js/customer_list.js",
     "Delivery Note": "public/js/delivery_note_list.js",
     "Sales Order":"public/js/sales_order_list.js"
     }

@@ -28,10 +28,22 @@ frappe.ui.form.on("Sales Order",{
         set_naming_series(frm);
     },
     refresh: function (frm) {
+        //set color for fields
         frm.fields_dict.custom_created_by.$wrapper
             .find('.control-value')
             .css('color', 'black');
+
+        // set quotation no    
         set_custom_quotation_no(frm);
+
+        //block billing request button for particular user
+         setTimeout(() => {
+            if (frappe.session.user === "naveen.k@zsystem.in" || frappe.session.user === "kamali.r@zsystem.in" || frappe.session.user == "zproposal@zsystem.in") {
+                $('.dropdown-item[data-label="Delivery%20Note"]').hide();
+            } else {
+                $('.dropdown-item[data-label="Delivery%20Note"]').text("Billing Request");
+            }
+        }, 500);
          frm.custom_cancel_amend_added = false;
 
         // Remove any existing Cancel & Amend button
