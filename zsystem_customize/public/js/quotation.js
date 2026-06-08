@@ -1,4 +1,10 @@
 frappe.ui.form.on("Quotation", {
+    //set particular field bold
+    refresh(frm){
+        frm.fields_dict.custom_created_by.$wrapper
+            .find('.control-value')
+            .css('color', 'black');
+    },
 
     // --------------------------------------------------
     // ONLOAD – only for NEW documents
@@ -37,6 +43,20 @@ frappe.ui.form.on("Quotation", {
     validate(frm) {
         if (frm.doc.__islocal) {
             set_naming_series(frm);
+        }
+    },
+    async party_name(frm) {
+        if (frm.doc.party_name) {
+            let r = await frappe.db.get_value(
+                'Customer',
+                frm.doc.party_name,
+                'custom_sales_person'
+            );
+
+            frm.set_value(
+                'custom_sales_person',
+                r.message.custom_sales_person || ''
+            );
         }
     }
 });

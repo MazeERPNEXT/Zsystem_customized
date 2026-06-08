@@ -209,6 +209,9 @@
 
   // ../zsystem_customize/zsystem_customize/public/js/quotation.js
   frappe.ui.form.on("Quotation", {
+    refresh(frm) {
+      frm.fields_dict.custom_created_by.$wrapper.find(".control-value").css("color", "black");
+    },
     onload(frm) {
       if (!frm.doc.__islocal)
         return;
@@ -233,6 +236,19 @@
     validate(frm) {
       if (frm.doc.__islocal) {
         set_naming_series(frm);
+      }
+    },
+    async party_name(frm) {
+      if (frm.doc.party_name) {
+        let r = await frappe.db.get_value(
+          "Customer",
+          frm.doc.party_name,
+          "custom_sales_person"
+        );
+        frm.set_value(
+          "custom_sales_person",
+          r.message.custom_sales_person || ""
+        );
       }
     }
   });
@@ -407,6 +423,12 @@
           }
         });
       });
+    },
+    async customer(frm) {
+      if (frm.doc.customer) {
+        let r = await frappe.db.get_value("Customer", frm.doc.customer, "custom_sales_person");
+        frm.set_value("custom_sales_person", r.message.custom_sales_person || "");
+      }
     }
   });
   function set_custom_quotation_no(frm) {
@@ -759,6 +781,12 @@
     },
     refresh: function(frm) {
       frm.fields_dict.custom_created_by.$wrapper.find(".control-value").css("color", "black");
+    },
+    async customer(frm) {
+      if (frm.doc.customer) {
+        let r = await frappe.db.get_value("Customer", frm.doc.customer, "custom_sales_person");
+        frm.set_value("custom_sales_person", r.message.custom_sales_person || "");
+      }
     }
   });
 
@@ -853,6 +881,12 @@
           frm.reload_doc();
         });
       }
+    },
+    async customer(frm) {
+      if (frm.doc.customer) {
+        let r = await frappe.db.get_value("Customer", frm.doc.customer, "custom_sales_person");
+        frm.set_value("custom_sales_person", r.message.custom_sales_person || "");
+      }
     }
   });
 
@@ -876,5 +910,17 @@
       }
     }
   }
+
+  // ../zsystem_customize/zsystem_customize/public/js/customer.js
+  frappe.ui.form.on("Customer", {
+    customer_name(frm) {
+      if (frm.doc.customer_name) {
+        frm.set_value(
+          "customer_name",
+          frm.doc.customer_name.toUpperCase()
+        );
+      }
+    }
+  });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.3ZZIZF3W.js.map
+//# sourceMappingURL=zsystem_customize.bundle.QNFZNJ7H.js.map

@@ -28,5 +28,12 @@ frappe.ui.form.on("Sales Invoice",{
         frm.fields_dict.custom_created_by.$wrapper
             .find('.control-value')
             .css('color', 'black');
+    },
+    //based on customer set the sales person name
+    async customer(frm){
+        if(frm.doc.customer){
+            let r = await frappe.db.get_value("Customer",frm.doc.customer,"custom_sales_person");
+            frm.set_value("custom_sales_person",r.message.custom_sales_person || '')
+        }
     }
 });

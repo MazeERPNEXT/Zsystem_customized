@@ -27,6 +27,8 @@ frappe.ui.form.on("Sales Order",{
 
         set_naming_series(frm);
     },
+
+    //set particular field bold
     refresh: function (frm) {
         //set color for fields
         frm.fields_dict.custom_created_by.$wrapper
@@ -44,6 +46,7 @@ frappe.ui.form.on("Sales Order",{
                 $('.dropdown-item[data-label="Delivery%20Note"]').text("Billing Request");
             }
         }, 500);
+
          frm.custom_cancel_amend_added = false;
 
         // Remove any existing Cancel & Amend button
@@ -121,6 +124,13 @@ frappe.ui.form.on("Sales Order",{
             });
         });
     },
+    //based on customer set the sales person name
+    async customer(frm){
+        if(frm.doc.customer){
+            let r = await frappe.db.get_value("Customer",frm.doc.customer,"custom_sales_person");
+            frm.set_value("custom_sales_person",r.message.custom_sales_person || '')
+        }
+    }
 });
 function set_custom_quotation_no(frm) {
     // Already set → don’t override

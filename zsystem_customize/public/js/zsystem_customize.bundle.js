@@ -9,3 +9,4 @@ import './sale_invoice';
 import './purchase_invoice';
 import './delivery_note';
 import './so_status';
+import './customer';

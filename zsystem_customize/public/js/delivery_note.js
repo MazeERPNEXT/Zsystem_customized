@@ -127,4 +127,10 @@ frappe.ui.form.on("Delivery Note", {
             });
         }
     },
+    async customer(frm){
+        if(frm.doc.customer){
+            let r = await frappe.db.get_value("Customer",frm.doc.customer,"custom_sales_person");
+            frm.set_value("custom_sales_person",r.message.custom_sales_person || '')
+        }
+    }
 });
