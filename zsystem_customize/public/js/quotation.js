@@ -156,3 +156,14 @@ function set_naming_series(frm) {
         `${frm.fy_code}-${offer_code}-${person_code}-.####`
     );
 }
+
+//Child table rate value set 0
+frappe.ui.form.on("Quotation Item", {
+    item_code(frm, cdt, cdn) {
+        setTimeout(function() {
+            frappe.model.set_value(cdt, cdn, 'rate', 0);
+            frappe.model.set_value(cdt, cdn, 'price_list_rate', 0);
+            frappe.model.set_value(cdt, cdn, 'base_price_list_rate', 0);
+        }, 500);
+    }
+});

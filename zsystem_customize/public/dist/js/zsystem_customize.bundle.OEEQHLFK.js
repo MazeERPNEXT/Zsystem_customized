@@ -326,6 +326,15 @@
       `${frm.fy_code}-${offer_code}-${person_code}-.####`
     );
   }
+  frappe.ui.form.on("Quotation Item", {
+    item_code(frm, cdt, cdn) {
+      setTimeout(function() {
+        frappe.model.set_value(cdt, cdn, "rate", 0);
+        frappe.model.set_value(cdt, cdn, "price_list_rate", 0);
+        frappe.model.set_value(cdt, cdn, "base_price_list_rate", 0);
+      }, 500);
+    }
+  });
 
   // ../zsystem_customize/zsystem_customize/public/js/sales_order.js
   frappe.ui.form.on("Sales Order", {
@@ -923,4 +932,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.QNFZNJ7H.js.map
+//# sourceMappingURL=zsystem_customize.bundle.OEEQHLFK.js.map
