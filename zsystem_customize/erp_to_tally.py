@@ -1,5 +1,6 @@
 import frappe
 import json
+from frappe.utils import getdate, nowdate
 
 @frappe.whitelist(allow_guest=True)
 def sent_salesinvoice_tally():
@@ -12,9 +13,21 @@ def sent_salesinvoice_tally():
                 "message": "Incorrect Tally code..."
             }
 
+        # Financial Year Start (1-Apr)
+        today = getdate(nowdate())
+
+        if today.month >= 4:
+            fy_start = f"{today.year}-04-01"
+        else:
+            fy_start = f"{today.year - 1}-04-01"
+
         invoices = frappe.get_all(
             "Sales Invoice",
-            filters={"docstatus": 1},
+            filters={
+                "docstatus": 1,
+                "is_return": 0,
+                "posting_date": [">=", fy_start]
+            },
             fields=["name"],
             order_by="posting_date desc"
         )
@@ -51,8 +64,8 @@ def sent_salesinvoice_tally():
             for item in doc.items:
                 product_list.append({
                     "invoicenumber": doc.name,
-                    "product": item.item_name,
-                    "productdescription": item.description or item.item_name,
+                    "product": item.item_code,
+                    "productdescription": item.description,
                     "parent": "Primary",
                     "partno": "",
                     "productgodown": item.warehouse,
@@ -69,7 +82,6 @@ def sent_salesinvoice_tally():
             ledger_list = []
 
             for tax in doc.taxes:
-
                 ledger_list.append({
                     "invoicenumber": doc.name,
                     "additionalledger": tax.account_head.replace(" - Z", ""),
@@ -103,12 +115,11 @@ def sent_salesinvoice_tally():
                 "invoicemode": "Invoice Voucher View",
                 "salesledger": (
                     doc.items[0].income_account.replace(" - Z", "")
-                    if doc.items
-                    else ""
+                    if doc.items else ""
                 ),
                 "buyername": doc.customer,
                 "buyerGSTIN": customer_gstin,
-                "Placeofsupply": doc.place_of_supply[3:] or "",
+                "Placeofsupply": doc.place_of_supply[3:] if doc.place_of_supply else "",
                 "subvalue": doc.net_total,
                 "roundoffamount": doc.rounding_adjustment,
                 "invoicevalue": doc.rounded_total or doc.grand_total,
@@ -117,6 +128,7 @@ def sent_salesinvoice_tally():
                 "irn": doc.get("irn") or "",
                 "ewaybillno": doc.get("ewaybill") or "",
                 "vehiclenumber": doc.vehicle_no or "",
+                **address,
                 "vchproductlist": product_list,
                 "vchledgerlist": ledger_list,
             })
@@ -128,7 +140,10 @@ def sent_salesinvoice_tally():
         }
 
     except Exception:
-        frappe.log_error(frappe.get_traceback(), "Sales Invoice Tally Export")
+        frappe.log_error(
+            frappe.get_traceback(),
+            "Sales Invoice Tally Export"
+        )
 
         return {
             "status": "error",
