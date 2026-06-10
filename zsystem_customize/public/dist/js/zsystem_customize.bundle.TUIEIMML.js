@@ -896,6 +896,14 @@
         );
       }
     },
+    custom_priority(frm) {
+      const map = {
+        "High": 1,
+        "Medium": 2,
+        "Low": 3
+      };
+      frm.set_value("custom_priority_order", map[frm.doc.custom_priority] || 99);
+    },
     after_save: function(frm) {
       frappe.db.get_value(
         "User",
@@ -977,4 +985,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.WBOQFUNO.js.map
+//# sourceMappingURL=zsystem_customize.bundle.TUIEIMML.js.map
