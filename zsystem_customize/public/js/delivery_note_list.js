@@ -1,5 +1,4 @@
 frappe.listview_settings['Delivery Note'] = {
-
     add_fields: [
         "custom_returnable_dc",
         "is_return",
@@ -72,5 +71,5 @@ frappe.listview_settings['Delivery Note'] = {
 
             return [__("Submitted"), "blue", "docstatus,=,1"];
         }
-    }
+    },
 };
