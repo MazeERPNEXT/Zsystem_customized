@@ -239,6 +239,51 @@
       }
     },
     async party_name(frm) {
+      if (!frm.doc.party_name) {
+        frm.set_value("contact_person", "");
+        frm.set_value("customer_address", "");
+        return;
+      }
+      frm.set_query("contact_person", function() {
+        return {
+          query: "frappe.contacts.doctype.contact.contact.contact_query",
+          filters: {
+            link_doctype: "Customer",
+            link_name: frm.doc.party_name
+          }
+        };
+      });
+      frm.set_query("customer_address", function() {
+        return {
+          query: "frappe.contacts.doctype.address.address.address_query",
+          filters: {
+            link_doctype: "Customer",
+            link_name: frm.doc.party_name
+          }
+        };
+      });
+      frappe.call({
+        method: "zsystem_customize.quotation.get_customer_contact_address",
+        args: {
+          customer: frm.doc.party_name
+        },
+        callback: function(r) {
+          if (r.message) {
+            if (r.message.contact) {
+              frm.set_value(
+                "contact_person",
+                r.message.contact
+              );
+            }
+            if (r.message.address) {
+              frm.set_value(
+                "customer_address",
+                r.message.address
+              );
+            }
+          }
+        }
+      });
       if (frm.doc.party_name) {
         let r = await frappe.db.get_value(
           "Customer",
@@ -932,4 +977,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.OEEQHLFK.js.map
+//# sourceMappingURL=zsystem_customize.bundle.UAEY4YHR.js.map
