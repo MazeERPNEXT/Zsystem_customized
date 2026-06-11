@@ -22,3 +22,20 @@ frappe.ui.form.on('Item Barcode', {
         }
     }    
 });
+
+frappe.ui.form.on("Item", {
+    custom_warehouse(frm) {
+        if (!frm.doc.custom_warehouse) return;
+
+        if (!frm.doc.item_defaults?.length) {
+            let row = frm.add_child("item_defaults");
+            row.default_warehouse = frm.doc.custom_warehouse;
+        } else {
+            frm.doc.item_defaults.forEach(row => {
+                row.default_warehouse = frm.doc.custom_warehouse;
+            });
+        }
+
+        frm.refresh_field("item_defaults");
+    }
+});

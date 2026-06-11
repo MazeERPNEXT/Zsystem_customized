@@ -154,6 +154,9 @@ doc_events = {
     "Sales Order": {
         "validate": "zsystem_customize.sales_order.update_sales_order_balance_qty"
     },
+    "Item": {
+        "before_insert": "zsystem_customize.item.set_default_warehouse"
+    }
 #     "Sales Order": {
 #         "before_submit": "zsystem_customize.sales_order.validate_so_stock"
 #     }

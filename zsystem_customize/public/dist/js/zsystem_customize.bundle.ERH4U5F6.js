@@ -206,6 +206,22 @@
       }
     }
   });
+  frappe.ui.form.on("Item", {
+    custom_warehouse(frm) {
+      var _a;
+      if (!frm.doc.custom_warehouse)
+        return;
+      if (!((_a = frm.doc.item_defaults) == null ? void 0 : _a.length)) {
+        let row = frm.add_child("item_defaults");
+        row.default_warehouse = frm.doc.custom_warehouse;
+      } else {
+        frm.doc.item_defaults.forEach((row) => {
+          row.default_warehouse = frm.doc.custom_warehouse;
+        });
+      }
+      frm.refresh_field("item_defaults");
+    }
+  });
 
   // ../zsystem_customize/zsystem_customize/public/js/quotation.js
   frappe.ui.form.on("Quotation", {
@@ -985,4 +1001,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.TUIEIMML.js.map
+//# sourceMappingURL=zsystem_customize.bundle.ERH4U5F6.js.map
