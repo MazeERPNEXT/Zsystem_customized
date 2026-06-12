@@ -54,7 +54,7 @@ frappe.ui.form.on("Sales Order",{
         $(".page-actions .btn:contains('Cancel & Amend')").remove();
 
         // ✅ ONLY for Submitted documents
-        if (frm.doc.docstatus === 1) {
+        if (frm.doc.docstatus === 1 && !frm.custom_cancel_amend_added) {
 
             frm.page.btn_secondary && frm.page.btn_secondary.hide();
 
@@ -132,6 +132,7 @@ frappe.ui.form.on("Sales Order",{
         }
     }
 });
+
 function set_custom_quotation_no(frm) {
     // Already set → don’t override
     if (frm.doc.custom_quotation_no) return;

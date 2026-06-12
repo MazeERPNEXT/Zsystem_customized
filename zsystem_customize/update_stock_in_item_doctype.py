@@ -1,4 +1,12 @@
 import frappe
+import erpnext
+from frappe import _
+from frappe import _, qb, throw
+# from erpnext.stock.doctype.warehouse.warehouse import get_warehouse_account_map
+from erpnext.stock import get_warehouse_account_map
+from frappe.utils import get_link_to_form
+from erpnext.assets.doctype.asset.asset import is_cwip_accounting_enabled
+from erpnext.assets.doctype.asset_category.asset_category import get_asset_category_account
 from typing import TypeVar, Generic
 from erpnext.controllers.stock_controller import StockController
 from erpnext.subcontracting.doctype.subcontracting_receipt.subcontracting_receipt import SubcontractingReceipt
@@ -141,8 +149,156 @@ class CustomSalesInvoice(UpdateStockMixin['CustomSalesInvoice'],SalesInvoice):
     pass
 
 class CustomPurchaseInvoice(UpdateStockMixin['CustomPurchaseInvoice'],PurchaseInvoice):
-    pass
+    def set_expense_account(self, for_validate=False):
+        auto_accounting_for_stock = erpnext.is_perpetual_inventory_enabled(self.company)
 
+        if auto_accounting_for_stock:
+            stock_not_billed_account = self.get_company_default("stock_received_but_not_billed")
+            stock_items = self.get_stock_items()
+
+        self.asset_received_but_not_billed = None
+
+        if self.update_stock:
+            self.validate_item_code()
+            self.validate_warehouse(for_validate)
+
+            if auto_accounting_for_stock:
+                warehouse_account = get_warehouse_account_map(self.company)
+
+        for item in self.get("items"):
+
+            # STOCK ITEMS
+            if (
+                auto_accounting_for_stock
+                and item.item_code in stock_items
+                and self.is_opening == "No"
+                and not item.is_fixed_asset
+                and (
+                    not item.po_detail
+                    or not frappe.db.get_value(
+                        "Purchase Order Item",
+                        item.po_detail,
+                        "delivered_by_supplier",
+                    )
+                )
+            ):
+
+                # ============================================
+                # DO NOT OVERWRITE MANUAL EXPENSE ACCOUNT
+                # ============================================
+
+                if not item.expense_account:
+
+                    if self.update_stock and item.warehouse and (not item.from_warehouse):
+
+                        item.expense_account = warehouse_account[item.warehouse]["account"]
+
+                    else:
+
+                        if item.purchase_receipt:
+
+                            negative_expense_booked_in_pr = frappe.db.sql(
+                                """
+                                select name
+                                from `tabGL Entry`
+                                where voucher_type='Purchase Receipt'
+                                and voucher_no=%s
+                                and account=%s
+                                """,
+                                (item.purchase_receipt, stock_not_billed_account),
+                            )
+
+                            if negative_expense_booked_in_pr:
+                                item.expense_account = stock_not_billed_account
+
+                        else:
+
+                            item.expense_account = stock_not_billed_account
+
+            # FIXED ASSET ITEMS
+            elif item.is_fixed_asset:
+
+                account = None
+
+                if not item.pr_detail and item.po_detail:
+
+                    receipt_item = frappe.get_cached_value(
+                        "Purchase Receipt Item",
+                        {
+                            "purchase_order": item.purchase_order,
+                            "purchase_order_item": item.po_detail,
+                            "docstatus": 1,
+                        },
+                        ["name", "parent"],
+                        as_dict=1,
+                    )
+
+                    if receipt_item:
+                        item.pr_detail = receipt_item.name
+                        item.purchase_receipt = receipt_item.parent
+
+                if item.pr_detail:
+
+                    if not self.asset_received_but_not_billed:
+                        self.asset_received_but_not_billed = self.get_company_default(
+                            "asset_received_but_not_billed"
+                        )
+
+                    arbnb_booked_in_pr = frappe.db.get_value(
+                        "GL Entry",
+                        {
+                            "voucher_type": "Purchase Receipt",
+                            "voucher_no": item.purchase_receipt,
+                            "account": self.asset_received_but_not_billed,
+                        },
+                        "name",
+                    )
+
+                    if arbnb_booked_in_pr:
+                        account = self.asset_received_but_not_billed
+
+                if not account:
+
+                    account_type = (
+                        "capital_work_in_progress_account"
+                        if is_cwip_accounting_enabled(item.asset_category)
+                        else "fixed_asset_account"
+                    )
+
+                    account = get_asset_category_account(
+                        account_type,
+                        item=item.item_code,
+                        company=self.company,
+                    )
+
+                    if not account:
+
+                        form_link = get_link_to_form(
+                            "Asset Category",
+                            item.asset_category,
+                        )
+
+                        throw(
+                            _("Please set Fixed Asset Account in {} against {}.").format(
+                                form_link,
+                                self.company,
+                            ),
+                            title=_("Missing Account"),
+                        )
+
+                # ONLY SET IF EMPTY
+                if not item.expense_account:
+                    item.expense_account = account
+
+            # ============================================
+            # REMOVE MANDATORY VALIDATION
+            # ============================================
+
+            elif not item.expense_account:
+                pass
+
+
+# ____________________________________________________________
 # # with reserve stock also
 # import frappe
 # from typing import TypeVar, Generic
@@ -315,7 +471,7 @@ class CustomPurchaseInvoice(UpdateStockMixin['CustomPurchaseInvoice'],PurchaseIn
 
 
 # # =========================================================
-# # DELIVERY NOTE CUSTOM STATUS
+# DELIVERYNOTE CUSTOM STATUS
 # # =========================================================
 
 # class CustomDeliveryNote(

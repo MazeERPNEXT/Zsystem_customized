@@ -437,7 +437,7 @@
       }, 500);
       frm.custom_cancel_amend_added = false;
       $(".page-actions .btn:contains('Cancel & Amend')").remove();
-      if (frm.doc.docstatus === 1) {
+      if (frm.doc.docstatus === 1 && !frm.custom_cancel_amend_added) {
         frm.page.btn_secondary && frm.page.btn_secondary.hide();
         frm.add_custom_button(
           __("Cancel & Amend"),
@@ -1001,4 +1001,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.ERH4U5F6.js.map
+//# sourceMappingURL=zsystem_customize.bundle.CHR3WV34.js.map

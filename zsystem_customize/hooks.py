@@ -133,7 +133,6 @@ override_doctype_class = {
     "Asset Capitalization": "zsystem_customize.update_stock_in_item_doctype.CustomAssetCapitalization",
     "Sales Invoice": "zsystem_customize.update_stock_in_item_doctype.CustomSalesInvoice",
     "Purchase Invoice": "zsystem_customize.update_stock_in_item_doctype.CustomPurchaseInvoice",
-    "Purchase Invoice": "zsystem_customize.update_stock_in_item_doctype.CustomPurchaseInvoice",
     # "Stock Reservation Entry": "zsystem_customize.update_stock_in_item_doctype.CustomStockReservationEntry",
     # "Delivery Note":"zsystem_customize.delivery_note.CustomDelivery",
     "Sales Order": "zsystem_customize.sales_order_status.CustomSalesOrder"
