@@ -418,7 +418,7 @@ def sent_purchase_tally():
                             "productdescription": clean_text,
                             "parent": "",
                             "partno": "",
-                            "productgodown": item.warehouse.replace(" - Z", ""),
+                            "productgodown": item.warehouse.replace(" - Z", "") if item.warehouse else "",
                             "unit": item.uom or "",
                             "Altunit": item.stock_uom or "",
                             "productqty": item.qty,
