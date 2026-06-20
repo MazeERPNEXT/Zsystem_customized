@@ -435,17 +435,7 @@
           $('.dropdown-item[data-label="Delivery%20Note"]').text("Billing Request");
         }
       }, 500);
-      frm.custom_cancel_amend_added = false;
-      $(".page-actions .btn:contains('Cancel & Amend')").remove();
-      if (frm.doc.docstatus === 1 && !frm.custom_cancel_amend_added) {
-        frm.page.btn_secondary && frm.page.btn_secondary.hide();
-        frm.add_custom_button(
-          __("Cancel & Amend"),
-          () => cancel_and_amend(frm)
-        );
-        frm.custom_cancel_amend_added = true;
-        move_cancel_amend_after_menu();
-      }
+      render_cancel_amend_button(frm);
     },
     onload_post_render(frm) {
       var _a;
@@ -583,8 +573,24 @@
         frappe.model.set_value(cdt, cdn, "price_list_rate", 0);
         frappe.model.set_value(cdt, cdn, "base_price_list_rate", 0);
       }, 1e3);
+      get_stock_qty_item(cdt, cdn);
     }
   });
+  function get_stock_qty_item(cdt, cdn) {
+    let row = locals[cdt][cdn];
+    if (!row.item_code)
+      return;
+    frappe.db.get_value("Item", row.item_code, "custom_stock_qty").then((r) => {
+      if (r.message) {
+        frappe.model.set_value(
+          cdt,
+          cdn,
+          "custom_item_stock_qty",
+          r.message.custom_stock_qty || 0
+        );
+      }
+    });
+  }
   function fetch_last_sales_order_details(frm, cdt, cdn) {
     let row = locals[cdt][cdn];
     if (!row.item_code || !frm.doc.customer)
@@ -605,6 +611,23 @@
         }
       }
     });
+  }
+  function render_cancel_amend_button(frm) {
+    const $page_actions = frm.page.wrapper.find(".page-actions");
+    if (frm.doc.docstatus !== 1) {
+      $page_actions.find("#custom-cancel-amend-btn").remove();
+      return;
+    }
+    frm.page.btn_secondary && frm.page.btn_secondary.hide();
+    clearTimeout(frm._cancel_amend_timeout);
+    frm._cancel_amend_timeout = setTimeout(() => {
+      $page_actions.find("#custom-cancel-amend-btn").remove();
+      const $btn = $(
+        `<button id="custom-cancel-amend-btn" class="btn btn-secondary btn-sm" style="margin-left:8px;">${__("Cancel & Amend")}</button>`
+      );
+      $btn.on("click", () => cancel_and_amend(frm));
+      $page_actions.append($btn);
+    }, 200);
   }
   function cancel_and_amend(frm) {
     frappe.confirm(
@@ -632,17 +655,6 @@
         });
       }
     );
-  }
-  function move_cancel_amend_after_menu() {
-    if (cur_frm.doc.docstatus !== 1)
-      return;
-    setTimeout(() => {
-      const $menu = $(".page-actions .menu-btn-group");
-      const $btn = $(".page-actions .btn:contains('Cancel & Amend')");
-      if ($menu.length && $btn.length) {
-        $btn.addClass("btn-secondary").css("margin-left", "8px").insertAfter($menu);
-      }
-    }, 200);
   }
 
   // ../zsystem_customize/zsystem_customize/public/js/override_quotation.js
@@ -885,10 +897,29 @@
       setTimeout(function() {
         frappe.model.set_value(cdt, cdn, "rate", 0);
       }, 1e3);
+      get_stock_qty_item2(frm, cdt, cdn);
     }
   });
+  function get_stock_qty_item2(frm, cdt, cdn) {
+    let row = locals[cdt][cdn];
+    if (!row.item_code)
+      return;
+    frappe.db.get_value("Item", row.item_code, "custom_stock_qty").then((r) => {
+      frappe.model.set_value(
+        cdt,
+        cdn,
+        "custom_item_stock_qty",
+        r.message ? r.message.custom_stock_qty || 0 : 0
+      );
+    });
+  }
   frappe.ui.form.on("Delivery Note", {
     refresh(frm) {
+      (frm.doc.items || []).forEach((row) => {
+        if (row.item_code) {
+          get_stock_qty_item2(frm, row.doctype, row.name);
+        }
+      });
       frm.fields_dict.custom_modified_by.$wrapper.find(".control-value").css("color", "black");
       if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
         frm.page.set_indicator(
@@ -1001,4 +1032,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.CHR3WV34.js.map
+//# sourceMappingURL=zsystem_customize.bundle.KNSBGDCH.js.map

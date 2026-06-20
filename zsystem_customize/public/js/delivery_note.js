@@ -8,11 +8,34 @@ frappe.ui.form.on("Delivery Note Item",{
             // frappe.model.set_value(cdt, cdn, 'price_list_rate', 0);
             // frappe.model.set_value(cdt, cdn, 'base_price_list_rate', 0);
         },1000);
+        get_stock_qty_item(frm, cdt, cdn);
     }
 })
+
+function get_stock_qty_item(frm, cdt, cdn) {
+    let row = locals[cdt][cdn];
+
+    if (!row.item_code) return;
+
+    frappe.db.get_value("Item", row.item_code, "custom_stock_qty")
+        .then(r => {
+            frappe.model.set_value(
+                cdt,
+                cdn,
+                "custom_item_stock_qty",
+                r.message ? (r.message.custom_stock_qty || 0) : 0
+            );
+        });
+}
+
 frappe.ui.form.on("Delivery Note", {
 
     refresh(frm) {
+        (frm.doc.items || []).forEach(row => {
+            if (row.item_code) {
+                get_stock_qty_item(frm, row.doctype, row.name);
+            }
+        });
         frm.fields_dict.custom_modified_by.$wrapper
             .find('.control-value')
             .css('color', 'black');

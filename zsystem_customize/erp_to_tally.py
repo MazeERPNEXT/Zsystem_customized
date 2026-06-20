@@ -618,7 +618,7 @@ def sent_purchase_tally():
                             "vchtype": "Purchase",
                             "invoicemode": "Invoice Voucher View",
                             "reference": "",
-                            "salesledger": doc.custom_expense_head or "",
+                            "salesledger": (doc.custom_expense_head).replace(" - Z","") if doc.custom_expense_head else "",
                             "vchclass": "Local Purchase",
                             "deliverynoteno": "",
                             "deliverynotedate": "",
@@ -684,4 +684,159 @@ def sent_purchase_tally():
             "status": "error",
             "message": frappe.get_traceback()
         }
-                
+
+# purchase invoice status
+@frappe.whitelist(allow_guest=True)
+def get_purchase_invoice_status():
+    try:
+        # -----------------------------
+        # GET INPUT DATA
+        # -----------------------------
+        data = frappe.local.form_dict
+
+        if frappe.request and frappe.request.data:
+            try:
+                data = json.loads(frappe.request.data)
+            except Exception:
+                pass
+
+        # -----------------------------
+        # GET VALUES
+        # -----------------------------
+        tallyname      = data.get("tallyname")
+        tallyserialno  = data.get("tallyserialno")
+        requesttype    = data.get("requesttype")
+
+        # -----------------------------
+        # VALIDATIONS
+        # -----------------------------
+        if requesttype != "Purchase Status":
+            return {
+                "status": "error",
+                "message": "Request Type must be Sales Status !!!"
+            }
+
+        invoices = []
+
+        # -----------------------------
+        # PROCESS STATUS REPORTS
+        # -----------------------------
+        for record in data.get("STATUSREPORTS", []):
+
+            vrno          = record.get("VRNO")
+            actual_status = record.get("APIRESULT_STATUS")
+            msg           = record.get("APIRESULT_Msg", "")   # ✅ FIX: extract msg here
+
+            if not vrno:
+                continue
+
+            try:
+                # -----------------------------
+                # CHECK SALES INVOICE EXISTS
+                # -----------------------------
+                if not frappe.db.exists("Purchase Invoice", vrno):
+
+                    frappe.log_error(
+                        title="Purchase Invoice Not Found",
+                        message=f"Purchase Invoice {vrno} not found"
+                    )
+
+                    invoices.append({
+                        "invoice_name": vrno,
+                        "status": "Error",
+                        "message": "Purchase Invoice not found"
+                    })
+                    continue
+
+                # -----------------------------
+                # GET DOCUMENT
+                # -----------------------------
+                doc = frappe.get_doc("Purchase Invoice", vrno)
+
+                # -----------------------------
+                # SUCCESS CASE
+                # -----------------------------
+                if actual_status == "Success":
+
+                    doc.db_set(
+                        "custom_tally_status",
+                        1,
+                        update_modified=True
+                    )
+
+                    invoices.append({
+                        "invoice_name": doc.name,
+                        "status": "Success",
+                        "message": "Tally Status Updated Successfully"
+                    })
+
+                # -----------------------------
+                # ERROR CASE
+                # -----------------------------
+                elif actual_status == "Error":
+
+                    frappe.log_error(
+                        title=f"Tally Error - {vrno}",
+                        reference_doctype = "Purchase Invoice",
+                        message=f"Invoice : {vrno}\nTally Response Status : {actual_status}\nTally Message : {msg}"  # ✅ FIX: msg now defined
+                    )
+
+                    invoices.append({
+                        "invoice_name": doc.name,
+                        "status": "Error",
+                        "message": msg  # ✅ FIX: msg now defined
+                    })
+
+                # -----------------------------
+                # UNKNOWN STATUS CASE
+                # -----------------------------
+                else:
+
+                    frappe.log_error(
+                        title=f"Unknown Tally Status - {vrno}",
+                        message=f"Received Status : {actual_status}"
+                    )
+
+                    invoices.append({
+                        "invoice_name": doc.name,
+                        "status": "Error",
+                        "message": f"Unknown status : {actual_status}"
+                    })
+
+            except Exception as e:
+
+                frappe.log_error(
+                    frappe.get_traceback(),
+                    "Purchase Invoice Status Update Error"
+                )
+
+                invoices.append({
+                    "invoice_name": vrno,
+                    "status": "Error",
+                    "message": str(e)
+                })
+
+        frappe.db.commit()
+
+        # -----------------------------
+        # FINAL RESPONSE
+        # -----------------------------
+        return {
+            "status": "success",
+            "tallyname": tallyname,
+            "tallyserialno": tallyserialno,
+            "requesttype": requesttype,
+            "saleslist": invoices
+        }
+
+    except Exception as e:
+
+        frappe.log_error(
+            frappe.get_traceback(),
+            "get_sales_invoice_status Error"
+        )
+
+        return {
+            "status": "error",
+            "message": str(e)
+        }

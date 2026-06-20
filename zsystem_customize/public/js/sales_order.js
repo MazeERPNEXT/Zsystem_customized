@@ -47,26 +47,7 @@ frappe.ui.form.on("Sales Order",{
             }
         }, 500);
 
-         frm.custom_cancel_amend_added = false;
-
-        // Remove any existing Cancel & Amend button
-        // frm.page.clear_actions_menu();
-        $(".page-actions .btn:contains('Cancel & Amend')").remove();
-
-        // ✅ ONLY for Submitted documents
-        if (frm.doc.docstatus === 1 && !frm.custom_cancel_amend_added) {
-
-            frm.page.btn_secondary && frm.page.btn_secondary.hide();
-
-            frm.add_custom_button(
-                __("Cancel & Amend"),
-                () => cancel_and_amend(frm)
-            );
-
-            frm.custom_cancel_amend_added = true;
-
-            move_cancel_amend_after_menu();
-        }
+        render_cancel_amend_button(frm);
     },
     onload_post_render(frm) {
         // Run only when created from Quotation
@@ -250,9 +231,26 @@ frappe.ui.form.on("Sales Order Item", {
             frappe.model.set_value(cdt, cdn, 'price_list_rate', 0);
             frappe.model.set_value(cdt, cdn, 'base_price_list_rate', 0);
         }, 1000);
+        get_stock_qty_item(cdt, cdn);
     }
 });
+function get_stock_qty_item(cdt, cdn) {
+    let row = locals[cdt][cdn];
 
+    if (!row.item_code) return;
+
+    frappe.db.get_value("Item", row.item_code, "custom_stock_qty")
+        .then(r => {
+            if (r.message) {
+                frappe.model.set_value(
+                    cdt,
+                    cdn,
+                    "custom_item_stock_qty",
+                    r.message.custom_stock_qty || 0
+                );
+            }
+        });
+}
 function fetch_last_sales_order_details(frm, cdt, cdn) {
     let row = locals[cdt][cdn];
 
@@ -275,7 +273,28 @@ function fetch_last_sales_order_details(frm, cdt, cdn) {
         }
     });
 }
+function render_cancel_amend_button(frm) {
+    const $page_actions = frm.page.wrapper.find('.page-actions');
 
+    if (frm.doc.docstatus !== 1) {
+        $page_actions.find('#custom-cancel-amend-btn').remove();
+        return;
+    }
+
+    frm.page.btn_secondary && frm.page.btn_secondary.hide();
+
+    clearTimeout(frm._cancel_amend_timeout);
+    frm._cancel_amend_timeout = setTimeout(() => {
+        $page_actions.find('#custom-cancel-amend-btn').remove();
+
+        const $btn = $(
+            `<button id="custom-cancel-amend-btn" class="btn btn-secondary btn-sm" style="margin-left:8px;">${__("Cancel & Amend")}</button>`
+        );
+        $btn.on('click', () => cancel_and_amend(frm));
+
+        $page_actions.append($btn);
+    }, 200);
+}
 // amend and cancel code
 function cancel_and_amend(frm) {
     frappe.confirm(
