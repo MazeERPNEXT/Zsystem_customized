@@ -13,6 +13,12 @@ frappe.ui.form.on("Purchase Receipt Item",{
     
 });
 
-frappe.ui.form.on("Purchase Receipt",{
+frappe.ui.form.on("Purchase Receipt", {
+    before_submit(frm) {
+        if (frm.doc.custom_is_hsn_code_verified != 1) {
+            frappe.msgprint(__("Kindly verify HSN Code in Item Table"));
+            frappe.validated = false; 
+        }
+    }
 });
 
