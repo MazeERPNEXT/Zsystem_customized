@@ -88,7 +88,7 @@ def get_columns(filters=None):
             "fieldtype": "Currency",
             "width": 140
         },
-          {
+        {
             "label": "Sales Person",
             "fieldname": "custom_sales_person",
             "fieldtype": "Data",

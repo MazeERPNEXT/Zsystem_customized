@@ -897,29 +897,10 @@
       setTimeout(function() {
         frappe.model.set_value(cdt, cdn, "rate", 0);
       }, 1e3);
-      get_stock_qty_item2(frm, cdt, cdn);
     }
   });
-  function get_stock_qty_item2(frm, cdt, cdn) {
-    let row = locals[cdt][cdn];
-    if (!row.item_code)
-      return;
-    frappe.db.get_value("Item", row.item_code, "custom_stock_qty").then((r) => {
-      frappe.model.set_value(
-        cdt,
-        cdn,
-        "custom_item_stock_qty",
-        r.message ? r.message.custom_stock_qty || 0 : 0
-      );
-    });
-  }
   frappe.ui.form.on("Delivery Note", {
     refresh(frm) {
-      (frm.doc.items || []).forEach((row) => {
-        if (row.item_code) {
-          get_stock_qty_item2(frm, row.doctype, row.name);
-        }
-      });
       frm.fields_dict.custom_modified_by.$wrapper.find(".control-value").css("color", "black");
       if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
         frm.page.set_indicator(
@@ -943,6 +924,21 @@
         );
       }
     },
+    before_submit: async function(frm) {
+      for (let row of frm.doc.items || []) {
+        if (row.item_code) {
+          let r = await frappe.db.get_value(
+            "Item",
+            row.item_code,
+            "custom_stock_qty"
+          );
+          if (r && r.message) {
+            row.custom_item_stock_qty = r.message.custom_stock_qty || 0;
+          }
+        }
+      }
+      frm.refresh_field("items");
+    },
     custom_priority(frm) {
       const map = {
         "High": 1,
@@ -951,17 +947,12 @@
       };
       frm.set_value("custom_priority_order", map[frm.doc.custom_priority] || 99);
     },
-    after_save: function(frm) {
-      frappe.db.get_value(
-        "User",
-        frm.doc.modified_by,
-        "full_name"
-      ).then((r) => {
-        if (r.message) {
-          frm.set_value("custom_modified_by", r.message.full_name);
-          frm.save();
-        }
-      });
+    async before_save(frm) {
+      var _a;
+      if (frm.doc.modified_by) {
+        let r = await frappe.db.get_value("User", frm.doc.modified_by, "full_name");
+        frm.set_value("custom_modified_by", ((_a = r.message) == null ? void 0 : _a.full_name) || "");
+      }
     },
     on_submit(frm) {
       if (frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
@@ -1032,4 +1023,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.KNSBGDCH.js.map
+//# sourceMappingURL=zsystem_customize.bundle.SGBJBVNP.js.map

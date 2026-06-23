@@ -148,13 +148,16 @@ override_doctype_class = {
 doc_events = {
     "Delivery Note": {
         "on_submit": "zsystem_customize.sales_order.update_sales_order_delivery_qty",
-        "on_cancel": "zsystem_customize.sales_order.update_sales_order_delivery_qty"
+        "on_cancel": "zsystem_customize.sales_order.update_sales_order_delivery_qty",
+        "on_submit": "zsystem_customize.delivery_note.update_sales_order_from_delivery_note",
+        "on_cancel": "zsystem_customize.delivery_note.update_sales_order_from_delivery_note",
+        "on_update_after_submit": "zsystem_customize.delivery_note.update_sales_order_from_delivery_note"
     },
     "Sales Order": {
         "validate": "zsystem_customize.sales_order.update_sales_order_balance_qty"
     },
     "Item": {
-        "before_insert": "zsystem_customize.item.set_default_warehouse"
+        "before_insert": "zsystem_customize.item.set_default_warehouse",
     }
 #     "Sales Order": {
 #         "before_submit": "zsystem_customize.sales_order.validate_so_stock"
