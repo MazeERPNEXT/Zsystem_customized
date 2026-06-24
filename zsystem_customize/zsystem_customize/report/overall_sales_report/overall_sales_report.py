@@ -82,12 +82,12 @@ def get_columns(filters=None):
             "fieldtype": "Currency",
             "width": 140
         },
-        {
-            "label": "Rounded Total",
-            "fieldname": "rounded_total",
-            "fieldtype": "Currency",
-            "width": 140
-        },
+        # {
+        #     "label": "Rounded Total",
+        #     "fieldname": "rounded_total",
+        #     "fieldtype": "Currency",
+        #     "width": 140
+        # },
         {
             "label": "Sales Person",
             "fieldname": "custom_sales_person",
@@ -168,7 +168,7 @@ def get_data(filters):
         data.extend(get_sales_invoice_data(filters))
         
     if not doctype_filter or doctype_filter == "Returnable DC":
-            data.extend(get_returnable_dc_data(filters))
+        data.extend(get_returnable_dc_data(filters))
 
     return data
 
@@ -241,11 +241,7 @@ def get_sales_order_data(filters):
                     ELSE NULL 
                 END AS posting_date,
 
-                CASE 
-                    WHEN ROW_NUMBER() OVER (PARTITION BY so.name ORDER BY soi.idx) = 1 
-                    THEN so.status 
-                    ELSE '' 
-                END AS status,
+                so.status,
 
                 CASE 
                     WHEN ROW_NUMBER() OVER (PARTITION BY so.name ORDER BY soi.idx) = 1 
@@ -347,11 +343,7 @@ def get_delivery_note_data(filters):
                 ELSE NULL
             END AS posting_date,
 
-            CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
-                THEN dn.status
-                ELSE ''
-            END AS status,
+            dn.status,
 
             CASE
                 WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
@@ -445,11 +437,7 @@ def get_returnable_dc_data(filters):
                 ELSE NULL
             END AS posting_date,
 
-            CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
-                THEN dn.status
-                ELSE ''
-            END AS status,
+            dn.status,
 
             CASE
                 WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
@@ -527,49 +515,66 @@ def get_sales_invoice_data(filters):
     return frappe.db.sql(f"""
         SELECT
             CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY si.name ORDER BY sii.idx) = 1
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY si.name
+                    ORDER BY sii.idx
+                ) = 1
                 THEN 'Sales Invoice'
                 ELSE ''
             END AS doctype_name,
 
             CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY si.name ORDER BY sii.idx) = 1
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY si.name
+                    ORDER BY sii.idx
+                ) = 1
                 THEN si.name
                 ELSE ''
             END AS name,
 
             CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY si.name ORDER BY sii.idx) = 1
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY si.name
+                    ORDER BY sii.idx
+                ) = 1
                 THEN si.customer
                 ELSE ''
             END AS customer,
 
             CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY si.name ORDER BY sii.idx) = 1
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY si.name
+                    ORDER BY sii.idx
+                ) = 1
                 THEN si.posting_date
                 ELSE NULL
             END AS posting_date,
 
-            CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY si.name ORDER BY sii.idx) = 1
-                THEN si.status
-                ELSE ''
-            END AS status,
+            si.status,
 
             CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY si.name ORDER BY sii.idx) = 1
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY si.name
+                    ORDER BY sii.idx
+                ) = 1
                 THEN si.custom_created_by
                 ELSE ''
             END AS custom_created_by,
 
             CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY si.name ORDER BY sii.idx) = 1
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY si.name
+                    ORDER BY sii.idx
+                ) = 1
                 THEN si.custom_sales_person
                 ELSE ''
             END AS custom_sales_person,
 
             CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY si.name ORDER BY sii.idx) = 1
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY si.name
+                    ORDER BY sii.idx
+                ) = 1
                 THEN si.po_no
                 ELSE ''
             END AS po_no,
