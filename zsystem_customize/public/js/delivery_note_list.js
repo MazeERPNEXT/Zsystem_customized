@@ -70,5 +70,89 @@ frappe.listview_settings['Delivery Note'] = {
 
             return [__("Submitted"), "blue", "docstatus,=,1"];
         }
-    }
+    },
+    onload(listview) {
+    apply_delivery_note_list_customization();
+},
+
+refresh(listview) {
+    apply_delivery_note_list_customization();
+}
 };
+function apply_delivery_note_list_customization() {
+    setTimeout(() => {
+
+        // -----------------------------
+        // Move Status header after ID
+        // -----------------------------
+        let $header = $(".list-row-head");
+
+        let $statusHeader = null;
+        let $idHeader = null;
+
+        $header.find(".list-row-col").each(function () {
+            let txt = $(this).text().trim();
+
+            if (txt === "Status") {
+                $statusHeader = $(this);
+            }
+
+            if (txt === "ID") {
+                $idHeader = $(this);
+            }
+        });
+
+        if ($statusHeader && $idHeader) {
+            $statusHeader.insertAfter($idHeader);
+        }
+
+        // -----------------------------
+        // Move Status value after ID
+        // -----------------------------
+        $(".list-row-container .list-row").each(function () {
+
+            let $row = $(this);
+
+            let $statusCol = null;
+            let $idCol = null;
+
+            $row.find(".list-row-col").each(function () {
+
+                let $col = $(this);
+                let text = $col.text().trim();
+
+                // ID column
+                if (
+                    text.startsWith("ZSICDC") ||
+                    text.startsWith("DN-")
+                ) {
+                    $idCol = $col;
+                }
+
+                // Status column only
+                let $statusSpan = $col.find("[data-filter^='status,']");
+
+                if ($statusSpan.length) {
+                    $statusCol = $col;
+                } else if (
+                    text === "To Bill" ||
+                    text === "Completed" ||
+                    text === "To Deliver and Bill" ||
+                    text === "To Bill and Deliver" ||
+                    text === "Draft" ||
+                    text === "Cancelled" ||
+                    text === "Return Issued"
+                ) {
+                    $statusCol = $col;
+                }
+
+            });
+
+            if ($statusCol && $idCol) {
+                $statusCol.insertAfter($idCol);
+            }
+
+        });
+
+    }, 500);
+}

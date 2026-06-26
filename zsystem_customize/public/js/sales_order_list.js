@@ -44,5 +44,9 @@ frappe.listview_settings['Sales Order'] = {
         if (doc.docstatus === 2) {
             return [__("Cancelled"), "red", "docstatus,=,2"];
         }
+    },
+    refresh(listview) {
+        listview.sort_by = "po_date";   // Fieldname
+        listview.sort_order = "desc";   // or "asc"
     }
 };
