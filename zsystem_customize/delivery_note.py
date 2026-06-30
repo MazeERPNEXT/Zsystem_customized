@@ -34,3 +34,5 @@ def update_sales_order_from_delivery_note(doc, method=None):
 
     for so in sales_orders:
         update_sales_order_delivery_totals(so)
+
+# send email based on expected closing date

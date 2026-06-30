@@ -64,12 +64,13 @@ def get_columns(filters=None):
         #     "fieldtype": "Float",
         #     "width": 140
         # },
-        # {
-        #     "label": "Balance Qty",
-        #     "fieldname": "custom_balance_qty",
-        #     "fieldtype": "Float",
-        #     "width": 140
-        # },
+        {
+            "label": "Warehouse",
+            "fieldname": "warehouse",
+            "fieldtype": "Select",
+            "options":"Warehouse",
+            "width": 140
+        },
         {
             "label": "Rate",
             "fieldname": "rate",
@@ -198,6 +199,7 @@ def get_purchase_order_data(filters):
 
                 poi.item_code,
                 poi.rate,
+                poi.warehouse,
                 poi.qty,
 
                 '' AS sales_order,
@@ -269,6 +271,7 @@ def get_purchase_receipt_data(filters):
                 pr.status,
 
                 pri.item_code,
+                pri.warehouse,
                 pri.rate,
                 pri.qty,
 
@@ -346,6 +349,7 @@ def get_purchase_invoice_data(filters):
                 pi.status,
 
                 pii.item_code,
+                pii.warehouse,
                 pii.rate,
                 pii.qty,
 

@@ -8,6 +8,7 @@ frappe.ui.form.on("Delivery Note Item",{
             // frappe.model.set_value(cdt, cdn, 'price_list_rate', 0);
             // frappe.model.set_value(cdt, cdn, 'base_price_list_rate', 0);
         },1000);
+        set_filter_serialno_based_item(frm);
     }
 })
 frappe.ui.form.on("Delivery Note", {
@@ -154,3 +155,16 @@ frappe.ui.form.on("Delivery Note", {
         }
     }
 });
+
+function set_filter_serialno_based_item(frm) {
+    frm.set_query("custom_serial_data", "items", function(doc, cdt, cdn) {
+        let row = locals[cdt][cdn];
+
+        return {
+            filters: {
+                item_code: row.item_code,
+                status:"Active"
+            }
+        };
+    });
+}

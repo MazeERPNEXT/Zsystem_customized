@@ -897,6 +897,7 @@
       setTimeout(function() {
         frappe.model.set_value(cdt, cdn, "rate", 0);
       }, 1e3);
+      set_filter_serialno_based_item(frm);
     }
   });
   frappe.ui.form.on("Delivery Note", {
@@ -989,6 +990,17 @@
       }
     }
   });
+  function set_filter_serialno_based_item(frm) {
+    frm.set_query("custom_serial_data", "items", function(doc, cdt, cdn) {
+      let row = locals[cdt][cdn];
+      return {
+        filters: {
+          item_code: row.item_code,
+          status: "Active"
+        }
+      };
+    });
+  }
 
   // ../zsystem_customize/zsystem_customize/public/js/so_status.js
   frappe.ui.form.on("Sales Order", {
@@ -1030,4 +1042,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.NCFRUKVI.js.map
+//# sourceMappingURL=zsystem_customize.bundle.XQDHLYAD.js.map
