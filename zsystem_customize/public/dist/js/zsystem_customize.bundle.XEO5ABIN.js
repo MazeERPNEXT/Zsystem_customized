@@ -708,6 +708,19 @@
     }
     render_dialog() {
       super.render_dialog();
+      const paymentField = this.dialog.get_field("custom_payment_term");
+      if (paymentField) {
+        paymentField.df.onchange = () => {
+          const value = this.dialog.get_value("custom_payment_term");
+          if (value && !/^\d+$/.test(value)) {
+            frappe.msgprint(__("Payment Term must contain only numbers."));
+            this.dialog.set_value(
+              "custom_payment_term",
+              value.replace(/\D/g, "")
+            );
+          }
+        };
+      }
       const customerNameField = this.dialog.get_field("customer_name");
       if (customerNameField) {
         customerNameField.df.onchange = () => {
@@ -1155,4 +1168,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.K6L43MZO.js.map
+//# sourceMappingURL=zsystem_customize.bundle.XEO5ABIN.js.map

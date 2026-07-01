@@ -167,6 +167,21 @@ class ZsystemGSTQuickEntryForm extends frappe.ui.form.CustomerQuickEntryForm {
 
     render_dialog() {
         super.render_dialog();
+        const paymentField = this.dialog.get_field("custom_payment_term");
+
+        if (paymentField) {
+            paymentField.df.onchange = () => {
+                const value = this.dialog.get_value("custom_payment_term");
+
+                if (value && !/^\d+$/.test(value)) {
+                    frappe.msgprint(__("Payment Term must contain only numbers."));
+                    this.dialog.set_value(
+                        "custom_payment_term",
+                        value.replace(/\D/g, "")
+                    );
+                }
+            };
+        }
         const customerNameField = this.dialog.get_field("customer_name");
         if (customerNameField) {
             customerNameField.df.onchange = () => {
