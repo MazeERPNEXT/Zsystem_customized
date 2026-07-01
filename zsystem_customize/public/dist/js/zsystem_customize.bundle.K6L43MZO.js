@@ -708,6 +708,18 @@
     }
     render_dialog() {
       super.render_dialog();
+      const customerNameField = this.dialog.get_field("customer_name");
+      if (customerNameField) {
+        customerNameField.df.onchange = () => {
+          const value = this.dialog.get_value("customer_name");
+          if (value) {
+            this.dialog.set_value(
+              "customer_name",
+              value.toUpperCase()
+            );
+          }
+        };
+      }
       ["map_to_first_name", "_email_id", "_mobile_no"].forEach((fieldname) => {
         const field = this.dialog.get_field(fieldname);
         if (field) {
@@ -1143,4 +1155,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.ERQDQPXX.js.map
+//# sourceMappingURL=zsystem_customize.bundle.K6L43MZO.js.map

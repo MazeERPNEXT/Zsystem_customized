@@ -167,6 +167,18 @@ class ZsystemGSTQuickEntryForm extends frappe.ui.form.CustomerQuickEntryForm {
 
     render_dialog() {
         super.render_dialog();
+        const customerNameField = this.dialog.get_field("customer_name");
+        if (customerNameField) {
+            customerNameField.df.onchange = () => {
+                const value = this.dialog.get_value("customer_name");
+                if (value) {
+                    this.dialog.set_value(
+                        "customer_name",
+                        value.toUpperCase()
+                    );
+                }
+            };
+        }
 
         // Make contact fields mandatory
         ["map_to_first_name", "_email_id", "_mobile_no"].forEach((fieldname) => {
