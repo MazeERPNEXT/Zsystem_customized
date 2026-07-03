@@ -11,3 +11,4 @@ import './delivery_note';
 import './so_status';
 import './customer';
 import './supplier';
+import './purchase_order';
