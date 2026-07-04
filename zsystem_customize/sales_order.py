@@ -322,3 +322,15 @@ def update_sales_order_delivery_qty(doc, method=None):
         )
 
     frappe.db.commit()
+
+# //Update stock status based on stock qty
+def set_stock_status(doc,method):
+    has_nostock = all(item.custom_item_stock_qty == 0 for item in doc.items)
+    has_particalstock = any(item.custom_item_stock_qty<item.qty for item in doc.items)
+
+    if has_nostock:
+        doc.custom_stock_status = "No Stock"
+    elif has_particalstock:
+        doc.custom_stock_status = "Partially Stock"
+    else:
+        doc.custom_stock_status = "Fully Stock"

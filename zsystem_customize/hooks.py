@@ -38,7 +38,8 @@ doctype_list_js = {
     "Customer":"public/js/customer_list.js",
     "Delivery Note": "public/js/delivery_note_list.js",
     "Sales Order":"public/js/sales_order_list.js",
-    "Item": "public/js/item_list.js"
+    "Item": "public/js/item_list.js",
+    "Purchase Order": "public/js/purchase_order_list.js"
     }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -136,10 +137,10 @@ override_doctype_class = {
     "Purchase Invoice": "zsystem_customize.update_stock_in_item_doctype.CustomPurchaseInvoice",
     # "Stock Reservation Entry": "zsystem_customize.update_stock_in_item_doctype.CustomStockReservationEntry",
     # "Delivery Note":"zsystem_customize.delivery_note.CustomDelivery",
-    "Sales Order": "zsystem_customize.sales_order_status.CustomSalesOrder"
-
+    "Sales Order": "zsystem_customize.sales_order_status.CustomSalesOrder",
+    "Purchase Order": "zsystem_customize.purchase_order_status.CustomPurchaseOrder",
     # "Sales Order": "armtech.armtech.overrides_class.sales_order.CustomSalesOrder",
-    # "Purchase Order": "zsystem_customize.update_stock_in_item_doctype.CustomPurchaseOrder",
+    
 }
 
 # Document Events
@@ -159,10 +160,14 @@ doc_events = {
     },
     "Item": {
         "before_insert": "zsystem_customize.item.set_default_warehouse",
+    },
+    "Purchase Order": {
+        "validate": "zsystem_customize.purchase_order.validate_so_rate",
+        "on_submit": "zsystem_customize.purchase_order.update_so_material_status"
+    },
+    "Sales Order": {
+        "validate": "zsystem_customize.sales_order.set_stock_status"
     }
-#     "Sales Order": {
-#         "before_submit": "zsystem_customize.sales_order.validate_so_stock"
-#     }
 	# "*": {
 	# 	"on_update": "method",
 	# 	"on_cancel": "method",
