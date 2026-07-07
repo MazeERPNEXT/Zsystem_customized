@@ -24,7 +24,60 @@ frappe.ui.form.on("Purchase Order",{
                 }
             }
         })
-    }
+    },
+    before_submit: function(frm) {
+    return new Promise((resolve, reject) => {
+        frappe.call({
+            method: "zsystem_customize.purchase_order.validate_stock_against_qty",
+            args: {
+                doctype: frm.doctype,
+                name: frm.doc.name,
+            },
+            callback: function(r) {
+                if (!r.message || !r.message.has_error) {
+                    resolve();
+                    return;
+                }
+
+                let d = new frappe.ui.Dialog({
+                    title: "Stock Warning",
+                    size: "large",
+                    fields: [
+                        {
+                            fieldtype: "HTML",
+                            fieldname: "stock_html",
+                            options: r.message.html
+                        },
+                        {
+                            fieldtype: "Check",
+                            fieldname: "confirm_submit",
+                            label: "I have reviewed the stock warning and want to continue.",
+                            onchange: function() {
+                                let checked = d.get_value("confirm_submit");
+
+                                if (checked) {
+                                    d.get_primary_btn().show();
+                                } else {
+                                    d.get_primary_btn().hide();
+                                }
+                            }
+                        }
+                    ],
+                    primary_action_label: "Submit",
+                    primary_action() {
+                        d.hide();
+                        resolve();
+                    }
+                });
+
+                d.show();
+
+                // Hide Submit button initially
+                d.get_primary_btn().hide();
+            }
+        });
+    });
+}
 })
 frappe.ui.form.on("Purchase Order Item", {
     item_code(frm, cdt, cdn) {
