@@ -35,9 +35,8 @@ def validate_so_rate(doc,method):
             if so_rate and item.rate >so_rate:
                 frappe.throw(f"Row {item.idx}: Purchase Order Rate ({item.rate}) cannot be greater than Sales Order Rate ({so_rate}).")
 
-# update po/material field based on so against po
 
-import frappe
+# update po/material field based on so against po
 
 def update_so_material_status(doc, method):
 
@@ -62,24 +61,39 @@ def update_so_material_status_on_receipt(doc, method):
     if not po_item_names:
         return
 
-    sales_orders = frappe.db.get_all(
+    purchase_order_item = frappe.db.get_all(
         "Purchase Order Item",
         filters={"name": ["in", list(po_item_names)]},
-        pluck="sales_order",
+        fields = ["parent","sales_order"]
     )
-    sales_orders = {so for so in sales_orders if so}
+    sales_orders = {}
 
-    status = "Waiting for Material" if doc.docstatus == 2 else "Material Receive"
+    for item in purchase_order_item:
+        if not item.sales_order:
+            continue
+    po_status = frappe.db.get_value("Purchase Order",item.parent,"status")
 
-    for so in sales_orders:
+    if doc.docstatus == 2:
+        sales_orders[item.sales_order] = "Waiting for Material"
+    else:
+        if po_status == "Receive":
+            sales_orders[item.sales_order] = "Material Receive"
+        else:
+            sales_orders[item.sales_order] = "Waiting for Material"
+
+
+    for so, status in sales_orders.items():
         frappe.db.set_value("Sales Order", so, "custom_pomaterial_status", status)
 
+# Direct po validate for if already have qty in stock
 @frappe.whitelist()
 def validate_stock_against_qty(doctype, name):
     doc = frappe.get_doc(doctype, name)
     error_rows = []
 
     for item in doc.items:
+        if item.sales_order:
+            return
 
         actual_qty = frappe.db.get_value(
             "Item",

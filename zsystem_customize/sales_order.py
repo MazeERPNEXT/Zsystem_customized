@@ -117,7 +117,7 @@ def validate_so_stock(doctype, name):
 
     return {"has_error": False}
 
-import frappe
+#get last so rate
 
 @frappe.whitelist()
 def get_last_sales_order_details(customer, item_code, current_so=None):

@@ -31,7 +31,7 @@ def execute():
             balance_qty = max((item.qty or 0) - delivered_qty, 0)
 
             if delivered_qty <= 0:
-                status = "Pending"
+                status = "Not Delivered"
             elif delivered_qty < (item.qty or 0):
                 status = "Partially Delivered"
             else:

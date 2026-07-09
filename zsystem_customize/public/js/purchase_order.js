@@ -79,6 +79,7 @@ frappe.ui.form.on("Purchase Order",{
     });
 }
 })
+// last purchase rate and date
 frappe.ui.form.on("Purchase Order Item", {
     item_code(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
