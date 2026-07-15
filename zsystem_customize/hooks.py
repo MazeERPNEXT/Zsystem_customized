@@ -169,7 +169,8 @@ doc_events = {
         "on_cancel": "zsystem_customize.purchase_order.update_so_material_status_on_receipt",
     },
     "Sales Invoice" : {
-        "validate": "zsystem_customize.sales_invoice.set_due_date"
+        "validate": "zsystem_customize.sales_invoice.set_due_date",
+        "on_submit": "zsystem_customize.sent_remainder_cutomer.send_docket_email"
     }
 	# "*": {
 	# 	"on_update": "method",
@@ -197,13 +198,17 @@ doc_events = {
 # 	"monthly": [
 # 		"zsystem_customize.tasks.monthly"
 # 	],
-# scheduler_events = {
-#     "cron": {
-#         "09 14 * * *": [
-#             "zsystem_customize.send_remainder.send_stock_remainder"
-#         ]
-#     }
-# }
+scheduler_events = {
+    "cron": {
+        # "09 14 * * *": [
+        #     "zsystem_customize.send_remainder.send_stock_remainder"
+        # ]
+       "11 12 * * *":[
+        #    "zsystem_customize.sent_remainder_cutomer.send_payment_reminder",
+           "zsystem_customize.sent_remainder_cutomer.send_returnabledc_remainder"
+       ]
+    }
+}
 
 
 # Testing
