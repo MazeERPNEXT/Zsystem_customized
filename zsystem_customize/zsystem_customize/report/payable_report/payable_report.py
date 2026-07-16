@@ -56,7 +56,7 @@ def get_columns(filters):
         },
         {
             "label": "Total",
-            "fieldname": "rounded_total",
+            "fieldname": "total",
             "fieldtype": "Currency",
             "width": 120
         }
@@ -107,22 +107,22 @@ def get_data(filters):
             due_date,
             bill_no,
             bill_date,
-            rounded_total,
+            CASE
+                WHEN disable_rounded_total = 1 THEN grand_total
+                ELSE rounded_total
+            END AS total,
             outstanding_amount,
-            (rounded_total - outstanding_amount) AS paid_amount
+            CASE
+                WHEN disable_rounded_total = 1
+                    THEN (grand_total - outstanding_amount)
+                ELSE (rounded_total - outstanding_amount)
+            END AS paid_amount
         FROM `tabPurchase Invoice`
         WHERE docstatus = 1
           AND posting_date BETWEEN %(from_date)s AND %(to_date)s
     """
-
     if filters.get("supplier"):
         query += " AND supplier = %(supplier)s"
-
-    # if filters.get("payment_status") == "Paid":
-    #     query += " AND outstanding_amount = 0"
-
-    # elif filters.get("payment_status") == "Outstanding":
-    #     query += " AND outstanding_amount > 0"
 
     query += " ORDER BY posting_date DESC"
 
@@ -136,7 +136,7 @@ def get_report_summary(data):
     total_outstanding = 0
 
     for row in data:
-        total_amount += row.get("rounded_total") or 0
+        total_amount += row.get("total") or 0
         total_paid += row.get("paid_amount") or 0
         total_outstanding += row.get("outstanding_amount") or 0
 
