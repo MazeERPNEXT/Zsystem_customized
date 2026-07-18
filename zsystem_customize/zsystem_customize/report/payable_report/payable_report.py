@@ -91,7 +91,7 @@ def get_columns(filters):
                 "label": "Outstanding Amount",
                 "fieldname": "outstanding_amount",
                 "fieldtype": "Currency",
-                "width": 140
+                "width": 180
             }
         ])
 

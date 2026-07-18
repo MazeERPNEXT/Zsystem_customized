@@ -1042,7 +1042,7 @@
    "field_name": "barcode",
    "idx": 0,
    "is_system_generated": 1,
-   "modified": "2026-06-05 17:40:11.985425",
+   "modified": "2026-07-15 12:08:39.393595",
    "modified_by": "Administrator",
    "module": null,
    "name": "Purchase Receipt Item-barcode-hidden",
