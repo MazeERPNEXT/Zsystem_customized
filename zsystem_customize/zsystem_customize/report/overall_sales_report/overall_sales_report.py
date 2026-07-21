@@ -276,18 +276,14 @@ def get_sales_order_data(filters):
                         PARTITION BY so.name
                         ORDER BY soi.idx
                     ) = 1
-                    THEN so.grand_total
-                    ELSE NULL
-                END AS grand_total,
-
-                CASE
-                    WHEN ROW_NUMBER() OVER (
-                        PARTITION BY so.name
-                        ORDER BY soi.idx
-                    ) = 1
-                    THEN so.rounded_total
+                    THEN
+                        CASE
+                            WHEN so.disable_rounded_total = 1 THEN so.grand_total
+                            ELSE so.rounded_total
+                        END
                     ELSE NULL
                 END AS rounded_total
+
 
             FROM `tabSales Order` so
             LEFT JOIN `tabSales Order Item` soi
@@ -379,14 +375,15 @@ def get_delivery_note_data(filters):
             '' AS delivery_note,
 
             CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
-                THEN dn.grand_total
-                ELSE NULL
-            END AS grand_total,
-
-            CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
-                THEN dn.rounded_total
+                WHEN ROW_NUMBER() OVER (
+                    PARTITION BY dn.name
+                    ORDER BY dni.idx
+                ) = 1
+                THEN
+                    CASE
+                        WHEN dn.disable_rounded_total = 1 THEN dn.grand_total
+                        ELSE dn.rounded_total
+                    END
                 ELSE NULL
             END AS rounded_total
 
@@ -477,16 +474,11 @@ def get_returnable_dc_data(filters):
                     PARTITION BY dn.name
                     ORDER BY dni.idx
                 ) = 1
-                THEN dn.grand_total
-                ELSE NULL
-            END AS grand_total,
-
-            CASE
-                WHEN ROW_NUMBER() OVER (
-                    PARTITION BY dn.name
-                    ORDER BY dni.idx
-                ) = 1
-                THEN dn.rounded_total
+                THEN
+                    CASE
+                        WHEN dn.disable_rounded_total = 1 THEN dn.grand_total
+                        ELSE dn.rounded_total
+                    END
                 ELSE NULL
             END AS rounded_total
 
@@ -594,16 +586,11 @@ def get_sales_invoice_data(filters):
                     PARTITION BY si.name
                     ORDER BY sii.idx
                 ) = 1
-                THEN si.grand_total
-                ELSE NULL
-            END AS grand_total,
-
-            CASE
-                WHEN ROW_NUMBER() OVER (
-                    PARTITION BY si.name
-                    ORDER BY sii.idx
-                ) = 1
-                THEN si.rounded_total
+                THEN
+                    CASE
+                        WHEN si.disable_rounded_total = 1 THEN si.grand_total
+                        ELSE si.rounded_total
+                    END
                 ELSE NULL
             END AS rounded_total
 

@@ -182,8 +182,8 @@ def send_returnabledc_remainder():
             continue
 
         # Send email only on the Expected Closing Date
-        remainder_date = add_days(dc.custom_expected_closing_date,-2)
-        if today_date != getdate(dc.custom_expected_closing_date):
+        remainder_date = add_days(dc.custom_expected_closing_date,1)
+        if today_date != remainder_date:
             continue
 
         # Customer Email

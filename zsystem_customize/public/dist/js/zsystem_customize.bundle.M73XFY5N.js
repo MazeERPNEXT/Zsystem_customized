@@ -489,6 +489,97 @@
         let r = await frappe.db.get_value("Customer", frm.doc.customer, "custom_sales_person");
         frm.set_value("custom_sales_person", r.message.custom_sales_person || "");
       }
+      frm.fields_dict.customer.$wrapper.find(".customer-payment-indicator").remove();
+      if (!frm.doc.customer)
+        return;
+      frappe.call({
+        method: "frappe.client.get_list",
+        args: {
+          doctype: "Sales Invoice",
+          filters: {
+            customer: frm.doc.customer,
+            docstatus: 1
+          },
+          fields: ["grand_total", "outstanding_amount"],
+          limit_page_length: 0
+        },
+        callback: function(r) {
+          let total = 0;
+          let outstanding = 0;
+          (r.message || []).forEach(function(inv) {
+            total += flt(inv.grand_total);
+            outstanding += flt(inv.outstanding_amount);
+          });
+          if (!total)
+            return;
+          let paid_amount = total - outstanding;
+          let paid_percentage = (total - outstanding) / total * 100;
+          let color = "#28a745";
+          let status = "Good Customer";
+          if (paid_percentage < 20) {
+            color = "#dc3545";
+            status = "High Risk Customer";
+          } else if (paid_percentage < 50) {
+            color = "#fd7e14";
+            status = "Average Customer";
+          }
+          frm.fields_dict.customer.$wrapper.append(`
+                    <div class="customer-payment-indicator"
+                        style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+                        <span style="
+                            width:10px;
+                            height:10px;
+                            border-radius:50%;
+                            background:${color};
+                            display:inline-block;">
+                        </span>
+                        <span style="font-weight:600;color:${color};">
+                            ${status} (${format_currency(paid_amount)}) (${paid_percentage.toFixed(1)}% Paid)
+                        </span>
+                    </div>
+                `);
+        }
+      });
+      frappe.db.get_list("Sales Invoice", {
+        filters: {
+          customer: frm.doc.customer,
+          docstatus: 1,
+          outstanding_amount: [">", 0]
+        },
+        fields: ["outstanding_amount"],
+        limit: 0
+      }).then((r) => {
+        let outstanding = r.reduce((sum, d) => sum + flt(d.outstanding_amount), 0);
+        if (outstanding > 0) {
+          let d = new frappe.ui.Dialog({
+            title: __("Outstanding Amount"),
+            fields: [
+              {
+                fieldtype: "HTML",
+                options: `
+                                <div style="font-size:15px;">
+                                    Customer has an outstanding amount of
+                                    <b>${format_currency(outstanding)}</b>.<br><br>
+                                    Do you want to continue?
+                                </div>
+                            `
+              }
+            ],
+            primary_action_label: __("Continue"),
+            primary_action() {
+              d.hide();
+              frm.__stop_save = false;
+            },
+            secondary_action_label: __("Cancel"),
+            secondary_action() {
+              d.hide();
+              frm.__stop_save = true;
+              frm.set_value("customer", "");
+            }
+          });
+          d.show();
+        }
+      });
     }
   });
   function set_custom_quotation_no(frm) {
@@ -2172,4 +2263,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.R3MS3U2T.js.map
+//# sourceMappingURL=zsystem_customize.bundle.M73XFY5N.js.map
