@@ -219,5 +219,25 @@ frappe.ui.form.on("Quotation Item", {
             frappe.model.set_value(cdt, cdn, 'price_list_rate', 0);
             frappe.model.set_value(cdt, cdn, 'base_price_list_rate', 0);
         }, 500);
+        let row = locals[cdt][cdn];
+
+        if (row.item_code) {
+            frappe.call({
+                method: "zsystem_customize.quotation.get_top_purchase_rates",
+                args: {
+                    item_code: row.item_code
+                },
+                callback: function(r) {
+                    if (r.message) {
+                        frappe.model.set_value(
+                            cdt,
+                            cdn,
+                            "custom_purchase_rate",
+                            r.message.map(rate => `${format_currency(rate)}`).join("\n")
+                        );
+                    }
+                }
+            });
+        }
     }
 });

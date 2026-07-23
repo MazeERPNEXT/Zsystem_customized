@@ -167,6 +167,31 @@ class ZsystemGSTQuickEntryForm extends frappe.ui.form.CustomerQuickEntryForm {
 
     render_dialog() {
         super.render_dialog();
+        this.dialog.set_primary_action(__("Save"), async () => {
+            const within_india = this.dialog.get_value("custom_within_india");
+            const outside_india = this.dialog.get_value("custom_outside_india");
+
+            if (!within_india && !outside_india) {
+                frappe.msgprint({
+                    title: __("Mandatory"),
+                    indicator: "red",
+                    message: __("Please select either <b>Within India</b> or <b>Outside India</b>.")
+                });
+                return;
+            }
+
+            if (within_india && outside_india) {
+                frappe.msgprint({
+                    title: __("Mandatory"),
+                    indicator: "red",
+                    message: __("Please select only one option.")
+                });
+                return;
+            }
+
+            // Continue save
+            await this.insert();
+        });
         const paymentField = this.dialog.get_field("custom_payment_term");
 
         if (paymentField) {
@@ -307,6 +332,32 @@ class ZsystemGSTQuickEntryForms extends frappe.ui.form.SupplierQuickEntryForm {
 
     render_dialog() {
         super.render_dialog();
+        this.dialog.set_primary_action(__("Save"), async () => {
+            const within_india = this.dialog.get_value("custom_within_india");
+            const outside_india = this.dialog.get_value("custom_outside_india");
+
+            if (!within_india && !outside_india) {
+                frappe.msgprint({
+                    title: __("Mandatory"),
+                    indicator: "red",
+                    message: __("Please select either <b>Within India</b> or <b>Outside India</b>.")
+                });
+                return;
+            }
+
+            if (within_india && outside_india) {
+                frappe.msgprint({
+                    title: __("Mandatory"),
+                    indicator: "red",
+                    message: __("Please select only one option.")
+                });
+                return;
+            }
+
+            // Continue save
+            await this.insert();
+        });
+        
         const paymentField = this.dialog.get_field("custom_payment_term");
 
         if (paymentField) {
