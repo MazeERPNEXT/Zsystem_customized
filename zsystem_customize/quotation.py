@@ -30,14 +30,14 @@ def get_customer_contact_address(customer):
 @frappe.whitelist()
 def get_top_purchase_rates(item_code):
     rates = frappe.db.sql("""
-        SELECT DISTINCT poi.rate
-        FROM `tabPurchase Order Item` poi
-        INNER JOIN `tabPurchase Order` po
-            ON po.name = poi.parent
+        SELECT DISTINCT pii.rate
+        FROM `tabPurchase Invoice Item` pii
+        INNER JOIN `tabPurchase Invoice` pi
+            ON pi.name = pii.parent
         WHERE
-            poi.item_code = %s
-            AND po.docstatus = 1
-        ORDER BY poi.rate DESC
+            pii.item_code = %s
+            AND pi.docstatus = 1
+        ORDER BY pii.rate DESC
         LIMIT 3
     """, (item_code,), as_dict=True)
 

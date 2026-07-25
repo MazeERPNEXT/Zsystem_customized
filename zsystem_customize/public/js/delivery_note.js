@@ -14,6 +14,12 @@ frappe.ui.form.on("Delivery Note Item",{
 frappe.ui.form.on("Delivery Note", {
 
     refresh(frm) {
+        // if (frm.doc.docstatus == 1){
+        //     $('.icon-btn[data-original-title = "Print"]').show();
+        // }
+        // else{
+        //     $('.icon-btn[data-original-title = "Print"]').hide();
+        // }
         frm.fields_dict.custom_modified_by.$wrapper
             .find('.control-value')
             .css('color', 'black');
@@ -60,14 +66,14 @@ frappe.ui.form.on("Delivery Note", {
 
         }
 
-        // Returnable DC
+        // Outstanding Item
         else if (
             frm.doc.docstatus === 1 &&
             frm.doc.custom_returnable_dc == 1
         ) {
 
             frm.page.set_indicator(
-                __("Returnable DC"),
+                __("Outstanding Item"),
                 "orange"
             );
 
@@ -135,14 +141,14 @@ frappe.ui.form.on("Delivery Note", {
             frm.reload_doc();
         }
 
-        // Normal Returnable DC
+        // Normal Outstanding Item
         else if (frm.doc.custom_returnable_dc == 1) {
 
             frappe.db.set_value(
                 "Delivery Note",
                 frm.doc.name,
                 "status",
-                "Returnable DC"
+                "Outstanding Item"
             ).then(() => {
                 frm.reload_doc();
             });

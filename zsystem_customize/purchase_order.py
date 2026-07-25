@@ -1,29 +1,32 @@
 import frappe
 # get last purchase rate and date
+
+import frappe
+
 @frappe.whitelist()
-def get_last_purchase_detail(item_code,supplier=None):
-    filters = {
-        "item_code":item_code,
-        "docstatus":1
-    }
-    if supplier:
-        filters["supplier"] = supplier
+def get_last_purchase_detail(item_code, supplier):
+    if not supplier:
+        return {}
+
     data = frappe.db.sql("""
         SELECT
-            poi.rate,
-            po.transaction_date
-        FROM `tabPurchase Order Item` poi
-        INNER JOIN `tabPurchase Order` po
-            ON po.name = poi.parent
+            pii.rate,
+            pi.posting_date
+        FROM `tabPurchase Invoice Item` pii
+        INNER JOIN `tabPurchase Invoice` pi
+            ON pi.name = pii.parent
         WHERE
-            poi.item_code = %(item_code)s
-            AND po.docstatus = 1
-            {supplier_condition}
-        ORDER BY po.transaction_date DESC, po.creation DESC
+            pii.item_code = %(item_code)s
+            AND pi.supplier = %(supplier)s
+            AND pi.docstatus = 1
+        ORDER BY
+            pi.posting_date DESC,
+            pi.creation DESC
         LIMIT 1
-    """.format(
-        supplier_condition="AND po.supplier=%(supplier)s" if supplier else ""
-    ), filters, as_dict=True)
+    """, {
+        "item_code": item_code,
+        "supplier": supplier
+    }, as_dict=True)
 
     return data[0] if data else {}
 

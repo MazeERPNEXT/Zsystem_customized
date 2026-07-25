@@ -43,7 +43,7 @@ frappe.listview_settings['Delivery Note'] = {
                 return [__("Completed"), "green", "status,=,Completed"];
             }
 
-            return [__("Returnable DC"), "orange", "status,=,Returnable DC"];
+            return [__("Outstanding Item"), "orange", "status,=,Outstanding Item"];
         }
 
         if (doc.docstatus === 1) {

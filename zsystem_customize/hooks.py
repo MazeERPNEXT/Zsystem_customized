@@ -155,6 +155,7 @@ doc_events = {
     },
     "Sales Order": {
         "validate": "zsystem_customize.sales_order.update_sales_order_balance_qty",
+        "validate":"zsystem_customize.sales_order.set_stock_status"
     },
     "Item": {
         "before_insert": "zsystem_customize.item.set_default_warehouse",
@@ -206,10 +207,10 @@ scheduler_events = {
         # "09 14 * * *": [
         #     "zsystem_customize.send_remainder.send_stock_remainder"
         # ]
-       "23 11 * * *":[
-        #    "zsystem_customize.sent_remainder_cutomer.send_payment_reminder",
+       "45 01 * * *":[
+           "zsystem_customize.sent_remainder_cutomer.send_payment_reminder",
            "zsystem_customize.sent_remainder_cutomer.send_returnabledc_remainder",
-        #    "zsystem_customize.send_supplier_remainder.send_remainder_zsystem"
+           "zsystem_customize.send_supplier_remainder.send_remainder_zsystem"
        ]
     }
 }

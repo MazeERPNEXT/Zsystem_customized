@@ -1287,7 +1287,7 @@
         );
       } else if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1) {
         frm.page.set_indicator(
-          __("Returnable DC"),
+          __("Outstanding Item"),
           "orange"
         );
       }
@@ -1344,7 +1344,7 @@
           "Delivery Note",
           frm.doc.name,
           "status",
-          "Returnable DC"
+          "Outstanding Item"
         ).then(() => {
           frm.reload_doc();
         });
@@ -1446,6 +1446,8 @@
             }
           }
         }
+      })(frm.doc.items || []).forEach((row) => {
+        fetch_last_purchase_rate(frm, row.doctype, row.name);
       });
     },
     before_submit: function(frm) {
@@ -1499,34 +1501,33 @@
   });
   frappe.ui.form.on("Purchase Order Item", {
     item_code(frm, cdt, cdn) {
-      let row = locals[cdt][cdn];
-      if (!row.item_code)
-        return;
-      frappe.call({
-        method: "zsystem_customize.purchase_order.get_last_purchase_detail",
-        args: {
-          item_code: row.item_code,
-          supplier: frm.doc.supplier
-        },
-        callback(r) {
-          if (r.message) {
-            frappe.model.set_value(
-              cdt,
-              cdn,
-              "last_purchase_price",
-              r.message.rate
-            );
-            frappe.model.set_value(
-              cdt,
-              cdn,
-              "custom_last_purchase_date",
-              r.message.transaction_date
-            );
-          }
-        }
-      });
+      fetch_last_purchase_rate(frm, cdt, cdn);
     }
   });
+  function fetch_last_purchase_rate(frm, cdt, cdn) {
+    const row = locals[cdt][cdn];
+    if (!frm.doc.supplier || !row.item_code) {
+      frappe.model.set_value(cdt, cdn, "custom_last_purchase_price", "");
+      frappe.model.set_value(cdt, cdn, "custom_last_purchase_date", "");
+      return;
+    }
+    frappe.call({
+      method: "zsystem_customize.purchase_order.get_last_purchase_detail",
+      args: {
+        item_code: row.item_code,
+        supplier: frm.doc.supplier
+      },
+      callback: function(r) {
+        if (r.message && Object.keys(r.message).length) {
+          frappe.model.set_value(cdt, cdn, "custom_last_purchase_price", r.message.rate);
+          frappe.model.set_value(cdt, cdn, "custom_last_purchase_date", r.message.posting_date);
+        } else {
+          frappe.model.set_value(cdt, cdn, "custom_last_purchase_price", "");
+          frappe.model.set_value(cdt, cdn, "custom_last_purchase_date", "");
+        }
+      }
+    });
+  }
 
   // ../zsystem_customize/zsystem_customize/public/js/override_so.js
   frappe.provide("zsystem_customize");
@@ -2324,4 +2325,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.L7ZGKLSI.js.map
+//# sourceMappingURL=zsystem_customize.bundle.I3IQIJAH.js.map

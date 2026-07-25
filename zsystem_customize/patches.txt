@@ -8,3 +8,4 @@ zsystem_customize.bin #3
 zsystem_customize.update_so_status #1
 zsystem_customize.dc_priority_update
 zsystem_customize.update_soitem_qty #2
+zsystem_customize.update_dc_status
