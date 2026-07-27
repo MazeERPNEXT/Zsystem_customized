@@ -11,6 +11,13 @@ frappe.ui.form.on("Sales Invoice",{
             );
         });
     },
+    custom_payment_days(frm){
+        let payment_value = frm.doc.custom_payment_days;
+        if(payment_value && !/^\d+$/.test(payment_value)){
+            frappe.msgprint(__("Payment Team allow number only"))
+            frm.set_value("custom_payment_days","");
+        }
+    },
     onload: function(frm) {
         if (frm.is_new() && frm.doc.custom_created_by) {
             frappe.db.get_value(
@@ -38,8 +45,9 @@ frappe.ui.form.on("Sales Invoice",{
     //based on customer set the sales person name
     async customer(frm){
         if(frm.doc.customer){
-            let r = await frappe.db.get_value("Customer",frm.doc.customer,"custom_sales_person");
+            let r = await frappe.db.get_value("Customer",frm.doc.customer,["custom_sales_person","custom_payment_term"]);
             frm.set_value("custom_sales_person",r.message.custom_sales_person || '')
+            frm.set_value("custom_payment_days",r.message.custom_payment_term || '')
         }
     }
 });

@@ -3,6 +3,22 @@ frappe.ui.form.on("Purchase Order",{
         if(!frm.doc.supplier){
             return
         }
+        frappe.db.get_value(
+            "Supplier",
+            frm.doc.supplier,
+            [
+                "custom_payment_term",
+                "custom_zsystem_responsible_person"
+            ]
+        ).then(({ message }) => {
+            if (message) {
+                frm.set_value("custom_payment_days", message.custom_payment_term || "");
+                frm.set_value(
+                    "custom_zsystem_responsible_person",
+                    message.custom_zsystem_responsible_person || ""
+                );
+            }
+        });
         frappe.call({
             method:"frappe.client.get_list",
             args : {

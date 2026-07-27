@@ -41,6 +41,14 @@ class UpdateStockMixin(Generic[T]):
 
         for sl_entry in sl_entries:
             item_code = sl_entry.item_code
+            # excluded_warehouses = ("Testing Warehouse - Z", "Sample Warehouse")
+            
+            # bins = frappe.db.sql("""
+            #     SELECT COALESCE(SUM(actual_qty), 0) AS a_qty
+            #     FROM `tabBin`
+            #     WHERE item_code = %s
+            #     AND warehouse NOT IN (%s, %s)
+            # """, (item_code, *excluded_warehouses), as_dict=True)
             bins = frappe.db.sql("""
                         SELECT sum(actual_qty) as a_qty
                         FROM `tabBin`
@@ -80,7 +88,7 @@ class CustomDeliveryNote(UpdateStockMixin['CustomDeliveryNote'],DeliveryNote):
                 return "Completed"
 
             # Default returnable state
-            return "Returnable DC"
+            return "Outstanding Item"
 
         return super().get_status()
 
@@ -102,7 +110,7 @@ class CustomDeliveryNote(UpdateStockMixin['CustomDeliveryNote'],DeliveryNote):
 
             # Default returnable state
             else:
-                new_status = "Returnable DC"
+                new_status = "Outstanding Item"
 
             self.status = new_status
 
@@ -127,7 +135,7 @@ class CustomDeliveryNote(UpdateStockMixin['CustomDeliveryNote'],DeliveryNote):
                 status = "Completed"
 
             else:
-                status = "Returnable DC"
+                status = "Outstanding Item"
 
         super().update_status(status, update_modified)
 

@@ -299,7 +299,7 @@ def send_returnabledc_remainder():
         filters={
             "docstatus": 1,
             "custom_returnable_dc": 1,
-            "status": "Returnable DC",
+            "status": "Outstanding Item",
         },
         fields=[
             "name",

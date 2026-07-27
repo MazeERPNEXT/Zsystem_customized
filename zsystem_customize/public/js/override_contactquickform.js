@@ -332,6 +332,18 @@ class ZsystemGSTQuickEntryForms extends frappe.ui.form.SupplierQuickEntryForm {
 
     render_dialog() {
         super.render_dialog();
+        const supplierNameField = this.dialog.get_field("supplier_name");
+        if (supplierNameField) {
+            supplierNameField.df.onchange = () => {
+                const value = this.dialog.get_value("supplier_name");
+                if (value) {
+                    this.dialog.set_value(
+                        "supplier_name",
+                        value.toUpperCase()
+                    );
+                }
+            };
+        }
         this.dialog.set_primary_action(__("Save"), async () => {
             const within_india = this.dialog.get_value("custom_within_india");
             const outside_india = this.dialog.get_value("custom_outside_india");

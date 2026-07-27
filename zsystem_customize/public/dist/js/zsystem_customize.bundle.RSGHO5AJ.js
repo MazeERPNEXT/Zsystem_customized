@@ -951,6 +951,18 @@
     }
     render_dialog() {
       super.render_dialog();
+      const supplierNameField = this.dialog.get_field("supplier_name");
+      if (supplierNameField) {
+        supplierNameField.df.onchange = () => {
+          const value = this.dialog.get_value("supplier_name");
+          if (value) {
+            this.dialog.set_value(
+              "supplier_name",
+              value.toUpperCase()
+            );
+          }
+        };
+      }
       this.dialog.set_primary_action(__("Save"), async () => {
         const within_india = this.dialog.get_value("custom_within_india");
         const outside_india = this.dialog.get_value("custom_outside_india");
@@ -1215,6 +1227,13 @@
         );
       });
     },
+    custom_payment_days(frm) {
+      let payment_value = frm.doc.custom_payment_days;
+      if (payment_value && !/^\d+$/.test(payment_value)) {
+        frappe.msgprint(__("Payment Team allow number only"));
+        frm.set_value("custom_payment_days", "");
+      }
+    },
     onload: function(frm) {
       if (frm.is_new() && frm.doc.custom_created_by) {
         frappe.db.get_value(
@@ -1233,8 +1252,9 @@
     },
     async customer(frm) {
       if (frm.doc.customer) {
-        let r = await frappe.db.get_value("Customer", frm.doc.customer, "custom_sales_person");
+        let r = await frappe.db.get_value("Customer", frm.doc.customer, ["custom_sales_person", "custom_payment_term"]);
         frm.set_value("custom_sales_person", r.message.custom_sales_person || "");
+        frm.set_value("custom_payment_days", r.message.custom_payment_term || "");
       }
     }
   });
@@ -1411,6 +1431,14 @@
 
   // ../zsystem_customize/zsystem_customize/public/js/supplier.js
   frappe.ui.form.on("Supplier", {
+    supplier_name(frm) {
+      if (frm.doc.supplier_name) {
+        frm.set_value(
+          "supplier_name",
+          frm.doc.supplier_name.toUpperCase()
+        );
+      }
+    },
     custom_payment_term(frm) {
       let payment_value = frm.doc.custom_payment_term;
       if (payment_value && !/^\d+$/.test(payment_value)) {
@@ -1426,6 +1454,22 @@
       if (!frm.doc.supplier) {
         return;
       }
+      frappe.db.get_value(
+        "Supplier",
+        frm.doc.supplier,
+        [
+          "custom_payment_term",
+          "custom_zsystem_responsible_person"
+        ]
+      ).then(({ message }) => {
+        if (message) {
+          frm.set_value("custom_payment_days", message.custom_payment_term || "");
+          frm.set_value(
+            "custom_zsystem_responsible_person",
+            message.custom_zsystem_responsible_person || ""
+          );
+        }
+      });
       frappe.call({
         method: "frappe.client.get_list",
         args: {
@@ -2325,4 +2369,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.I3IQIJAH.js.map
+//# sourceMappingURL=zsystem_customize.bundle.RSGHO5AJ.js.map

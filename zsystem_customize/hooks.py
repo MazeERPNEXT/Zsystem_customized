@@ -175,6 +175,12 @@ doc_events = {
     },
    "Purchase Invoice" :{
         "validate":"zsystem_customize.purchase_invoice.set_due_date"
+    },
+    "Customer":{
+        "validate":"zsystem_customize.customer.validate_customer"
+    },
+    "Supplier":{
+        "validate":"zsystem_customize.supplier.validate_supplier"
     }
 	# "*": {
 	# 	"on_update": "method",
@@ -207,10 +213,10 @@ scheduler_events = {
         # "09 14 * * *": [
         #     "zsystem_customize.send_remainder.send_stock_remainder"
         # ]
-       "45 01 * * *":[
-           "zsystem_customize.sent_remainder_cutomer.send_payment_reminder",
+       "15 04 * * *":[
+        #    "zsystem_customize.sent_remainder_cutomer.send_payment_reminder",
            "zsystem_customize.sent_remainder_cutomer.send_returnabledc_remainder",
-           "zsystem_customize.send_supplier_remainder.send_remainder_zsystem"
+        #    "zsystem_customize.send_supplier_remainder.send_remainder_zsystem"
        ]
     }
 }

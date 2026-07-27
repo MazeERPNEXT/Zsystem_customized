@@ -72,12 +72,12 @@ frappe.listview_settings['Delivery Note'] = {
         }
     },
     onload(listview) {
-    apply_delivery_note_list_customization();
-},
+        apply_delivery_note_list_customization();
+    },
 
-refresh(listview) {
-    apply_delivery_note_list_customization();
-}
+    refresh(listview) {
+        apply_delivery_note_list_customization();
+    }
 };
 function apply_delivery_note_list_customization() {
     setTimeout(() => {
