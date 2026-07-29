@@ -114,11 +114,11 @@ doctype_list_js = {
 # Permissions evaluated in scripted ways
 
 # permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
+# 	"Sales Order": "zsystem_customize.sales_order.get_permission_query_conditions"
 # }
 #
 # has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
+#     "Sales Order": "zsystem_customize.sales_order.has_permission"
 # }
 
 # DocType Class
@@ -213,10 +213,10 @@ scheduler_events = {
         # "09 14 * * *": [
         #     "zsystem_customize.send_remainder.send_stock_remainder"
         # ]
-       "15 04 * * *":[
-        #    "zsystem_customize.sent_remainder_cutomer.send_payment_reminder",
+       "12 07 * * *":[
+           "zsystem_customize.sent_remainder_cutomer.send_payment_reminder",
            "zsystem_customize.sent_remainder_cutomer.send_returnabledc_remainder",
-        #    "zsystem_customize.send_supplier_remainder.send_remainder_zsystem"
+           "zsystem_customize.send_supplier_remainder.send_remainder_zsystem"
        ]
     }
 }

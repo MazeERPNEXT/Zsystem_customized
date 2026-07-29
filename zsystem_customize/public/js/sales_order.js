@@ -173,49 +173,49 @@ frappe.ui.form.on("Sales Order",{
             }
         });
 
-        frappe.db.get_list("Sales Invoice", {
-            filters: {
-                customer: frm.doc.customer,
-                docstatus: 1,
-                outstanding_amount: [">", 0]
-            },
-            fields: ["outstanding_amount"],
-            limit: 0
-        }).then((r) => {
+    //     frappe.db.get_list("Sales Invoice", {
+    //         filters: {
+    //             customer: frm.doc.customer,
+    //             docstatus: 1,
+    //             outstanding_amount: [">", 0]
+    //         },
+    //         fields: ["outstanding_amount"],
+    //         limit: 0
+    //     }).then((r) => {
 
-            let outstanding = r.reduce((sum, d) => sum + flt(d.outstanding_amount), 0);
+    //         let outstanding = r.reduce((sum, d) => sum + flt(d.outstanding_amount), 0);
 
-            if (outstanding > 0) {
-                let d = new frappe.ui.Dialog({
-                    title: __('Outstanding Amount'),
-                    fields: [
-                        {
-                            fieldtype: 'HTML',
-                            options: `
-                                <div style="font-size:15px;">
-                                    Customer has an outstanding amount of
-                                    <b>${format_currency(outstanding)}</b>.<br><br>
-                                    Do you want to continue?
-                                </div>
-                            `
-                        }
-                    ],
-                    primary_action_label: __('Continue'),
-                    primary_action() {
-                        d.hide();
-                        frm.__stop_save = false;
-                    },
-                    secondary_action_label: __('Cancel'),
-                    secondary_action() {
-                        d.hide();
-                        frm.__stop_save = true;
-                        frm.set_value("customer", "");
-                    }
-                });
+    //         if (outstanding > 0) {
+    //             let d = new frappe.ui.Dialog({
+    //                 title: __('Outstanding Amount'),
+    //                 fields: [
+    //                     {
+    //                         fieldtype: 'HTML',
+    //                         options: `
+    //                             <div style="font-size:15px;">
+    //                                 Customer has an outstanding amount of
+    //                                 <b>${format_currency(outstanding)}</b>.<br><br>
+    //                                 Do you want to continue?
+    //                             </div>
+    //                         `
+    //                     }
+    //                 ],
+    //                 primary_action_label: __('Continue'),
+    //                 primary_action() {
+    //                     d.hide();
+    //                     frm.__stop_save = false;
+    //                 },
+    //                 secondary_action_label: __('Cancel'),
+    //                 secondary_action() {
+    //                     d.hide();
+    //                     frm.__stop_save = true;
+    //                     frm.set_value("customer", "");
+    //                 }
+    //             });
 
-                d.show();
-            }
-        });
+    //             d.show();
+    //         }
+    //     });
     },
     //  validate(frm) {
     //     if (frm.__stop_save) {

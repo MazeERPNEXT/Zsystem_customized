@@ -13,7 +13,23 @@ def send_docket_email(doc,method=None):
     if not customer.custom_receiver_email_id:
         frappe.msgprint("Reciever Email ID is not set ")
         return
-    
+
+    dn = frappe.db.sql("""
+        SELECT DISTINCT
+            dni.parent AS delivery_note,
+            dn.posting_date
+        FROM `tabSales Invoice Item` sii
+        INNER JOIN `tabDelivery Note Item` dni
+            ON sii.dn_detail = dni.name
+        INNER JOIN `tabDelivery Note` dn
+            ON dn.name = dni.parent
+        WHERE sii.parent = %s
+        LIMIT 1
+    """, (doc.name,), as_dict=True)
+    if dn:
+        delivery_note = dn[0].delivery_note
+        delivery_date = frappe.utils.formatdate(dn[0].posting_date)
+
     subject = f"Docket Details - {doc.name}"
 
     message = f"""
@@ -49,8 +65,8 @@ def send_docket_email(doc,method=None):
         </tr>
 
         <tr>
-            <td>{frappe.utils.formatdate(doc.posting_date)}</td>
-            <td>{doc.name}</td>
+            <td>{delivery_date}</td>
+            <td>{delivery_note}</td>
             <td>{doc.po_no or ""}</td>
             <td>{frappe.utils.formatdate(doc.po_date) if doc.po_date else ""}</td>
             <td>{frappe.utils.formatdate(doc.posting_date) if doc.posting_date else ""}</td>
@@ -413,8 +429,7 @@ def send_returnabledc_remainder():
         """
 
         frappe.sendmail(
-            recipients=[receiver_email],
-            cc=[sales_person_email] if sales_person_email else None,
+            recipients=[sales_person_email] if sales_person_email else None,
             subject=subject,
             message=message,
         )
