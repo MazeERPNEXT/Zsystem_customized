@@ -62,7 +62,7 @@
 #         frappe.throw(message)
 import frappe
 import re
-
+from frappe.utils import flt
 @frappe.whitelist()
 def validate_so_stock(doctype, name):
     doc = frappe.get_doc(doctype, name)
@@ -208,31 +208,18 @@ import frappe
 # =========================================================
 
 def update_sales_order_balance_qty(doc, method=None):
-
     for item in doc.items:
+        qty = flt(item.qty)
+        delivered_qty = flt(item.custom_delivery_qty)
 
-        # Ordered Qty
-        qty = item.qty or 0
+        balance_qty = max(qty - delivered_qty, 0)
 
-        # Delivered Qty
-        delivered_qty = item.custom_delivery_qty or 0
-
-        # Balance Qty
-        balance_qty = qty - delivered_qty
-
-        if balance_qty < 0:
-            balance_qty = 0
-
-        # Set Values
         item.custom_balance_qty = balance_qty
 
-        # Delivery Status
-        if delivered_qty == 0:
+        if delivered_qty <= 0:
             item.custom_delivery_status = "Not Delivered"
-
         elif delivered_qty < qty:
             item.custom_delivery_status = "Partially Delivered"
-
         else:
             item.custom_delivery_status = "Delivered"
 

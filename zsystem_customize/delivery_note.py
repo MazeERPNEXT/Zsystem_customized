@@ -28,7 +28,6 @@ def update_sales_order_delivery_totals(sales_order):
     total_qty = result[0].total_qty if result else 0
     total_amount = result[0].total_amount if result else 0
 
-    # Update Sales Order fields only
     frappe.db.set_value(
         "Sales Order",
         sales_order,
@@ -50,10 +49,17 @@ def update_sales_order_delivery_qty(doc, method=None):
 
     for so_detail in so_items:
 
-        so_qty = (
-            frappe.db.get_value("Sales Order Item", so_detail, "qty")
-            or 0
+        so_doc = frappe.db.get_value(
+            "Sales Order Item",
+            so_detail,
+            ["qty", "parent"],
+            as_dict=True,
         )
+
+        if not so_doc:
+            continue
+
+        so_qty = so_doc.qty or 0
 
         delivered_qty = frappe.db.sql(
             """
@@ -62,22 +68,21 @@ def update_sales_order_delivery_qty(doc, method=None):
             INNER JOIN `tabDelivery Note` dn
                 ON dn.name = dni.parent
             WHERE
-                dni.so_detail=%s
-                AND dn.docstatus=1
+                dni.so_detail = %s
+                AND dn.docstatus = 1
             """,
             (so_detail,),
-        )[0][0]
+        )[0][0] or 0
 
         balance_qty = max(so_qty - delivered_qty, 0)
 
-        if delivered_qty <= 0:
-            status = "Pending"
+        if delivered_qty == 0:
+            status = "Not Delivered"
         elif delivered_qty < so_qty:
             status = "Partially Delivered"
         else:
             status = "Delivered"
 
-        # Update Sales Order Item only
         frappe.db.set_value(
             "Sales Order Item",
             so_detail,

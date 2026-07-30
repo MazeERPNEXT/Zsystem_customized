@@ -148,13 +148,13 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
-    "Delivery Note": {
+   "Delivery Note": {
         "on_submit": "zsystem_customize.delivery_note.delivery_note_events",
         "on_cancel": "zsystem_customize.delivery_note.delivery_note_events",
-        "on_update_after_submit": "zsystem_customize.delivery_note.update_sales_order_from_delivery_note",
+        "on_update_after_submit": "zsystem_customize.delivery_note.delivery_note_events",
     },
     "Sales Order": {
-        "validate": "zsystem_customize.sales_order.update_sales_order_balance_qty",
+        "before_save": "zsystem_customize.sales_order.update_sales_order_balance_qty",
         "validate":"zsystem_customize.sales_order.set_stock_status"
     },
     "Item": {
