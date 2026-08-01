@@ -278,6 +278,15 @@
           }
         };
       });
+      frm.set_query("shipping_address_name", function() {
+        return {
+          query: "frappe.contacts.doctype.address.address.address_query",
+          filters: {
+            link_doctype: "Customer",
+            link_name: frm.doc.party_name
+          }
+        };
+      });
       frappe.call({
         method: "zsystem_customize.quotation.get_customer_contact_address",
         args: {
@@ -2329,4 +2338,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.2X6OZFMV.js.map
+//# sourceMappingURL=zsystem_customize.bundle.QG7Q3ODC.js.map

@@ -73,6 +73,15 @@ frappe.ui.form.on("Quotation", {
                 }
             };
         });
+        frm.set_query("shipping_address_name", function() {
+            return {
+                query: "frappe.contacts.doctype.address.address.address_query",
+                filters: {
+                    link_doctype: "Customer",
+                    link_name: frm.doc.party_name
+                }
+            };
+        });
 
         // Fetch Contact & Address
         frappe.call({
