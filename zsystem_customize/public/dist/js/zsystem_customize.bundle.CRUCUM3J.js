@@ -306,6 +306,12 @@
                 r.message.address
               );
             }
+            if (r.message.address) {
+              frm.set_value(
+                "shipping_address_name",
+                r.message.address
+              );
+            }
           }
         }
       });
@@ -2338,4 +2344,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.QG7Q3ODC.js.map
+//# sourceMappingURL=zsystem_customize.bundle.CRUCUM3J.js.map

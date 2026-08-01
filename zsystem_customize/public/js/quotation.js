@@ -106,6 +106,12 @@ frappe.ui.form.on("Quotation", {
                             r.message.address
                         );
                     }
+                    if (r.message.address) {
+                        frm.set_value(
+                            "shipping_address_name",
+                            r.message.address
+                        );
+                    }
                 }
             }
         });
