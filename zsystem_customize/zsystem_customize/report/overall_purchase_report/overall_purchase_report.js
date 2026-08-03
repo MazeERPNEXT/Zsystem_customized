@@ -40,9 +40,9 @@ frappe.query_reports["Overall Purchase Report"] = {
                     options = [
                         "",
                         "Draft",
-                        "To Receive and Bill",
-                        "To Bill",
-                        "Partially Deliver",
+                        "Followup",
+                        "Receive",
+                        "Partially Receive",
                         "Completed",
                         // "Cancelled"
                     ];
@@ -54,7 +54,6 @@ frappe.query_reports["Overall Purchase Report"] = {
                     options = [
                         "",
                         "Draft",
-                        "Partly Billed",
 						"To Bill",
 						"Completed",
 						"Return",
@@ -70,7 +69,7 @@ frappe.query_reports["Overall Purchase Report"] = {
                         "Draft",
 						"Unpaid",
 						"Paid",
-						"Partly Paid",
+						// "Partly Paid",
 						"Overdue",
 						"Return",
 						"Debit Note Issued"

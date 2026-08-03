@@ -341,11 +341,11 @@ def get_delivery_note_data(filters):
 
             dn.status,
 
-            CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
-                THEN dn.custom_created_by
-                ELSE ''
-            END AS custom_created_by,
+            # CASE
+            #     WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
+            #     THEN dn.custom_created_by
+            #     ELSE ''
+            # END AS custom_created_by,
 
             CASE
                 WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
@@ -436,11 +436,11 @@ def get_returnable_dc_data(filters):
 
             dn.status,
 
-            CASE
-                WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
-                THEN dn.custom_created_by
-                ELSE ''
-            END AS custom_created_by,
+            # CASE
+            #     WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
+            #     THEN dn.custom_created_by
+            #     ELSE ''
+            # END AS custom_created_by,
 
             CASE
                 WHEN ROW_NUMBER() OVER (PARTITION BY dn.name ORDER BY dni.idx) = 1
