@@ -375,7 +375,15 @@ class ZsystemGSTQuickEntryForms extends frappe.ui.form.SupplierQuickEntryForm {
             }
 
             // Continue save
-            await this.insert();
+            try {
+                await this.insert();
+
+                if (this.dialog) {
+                    this.dialog.hide();
+                }
+            } catch (e) {
+                console.error(e);
+            }
         });
         
         const paymentField = this.dialog.get_field("custom_payment_term");

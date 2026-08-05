@@ -964,7 +964,14 @@
           });
           return;
         }
-        await this.insert();
+        try {
+          await this.insert();
+          if (this.dialog) {
+            this.dialog.hide();
+          }
+        } catch (e) {
+          console.error(e);
+        }
       });
       const paymentField = this.dialog.get_field("custom_payment_term");
       if (paymentField) {
@@ -2351,4 +2358,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.BS4DYG62.js.map
+//# sourceMappingURL=zsystem_customize.bundle.OTNYJDLH.js.map

@@ -213,7 +213,7 @@ scheduler_events = {
         # "09 14 * * *": [
         #     "zsystem_customize.send_remainder.send_stock_remainder"
         # ]
-       "12 07 * * *":[
+       "49 14 * * *":[
            "zsystem_customize.sent_remainder_cutomer.send_payment_reminder",
            "zsystem_customize.sent_remainder_cutomer.send_returnabledc_remainder",
            "zsystem_customize.send_supplier_remainder.send_remainder_zsystem"
