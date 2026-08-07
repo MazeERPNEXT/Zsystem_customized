@@ -12,14 +12,14 @@ class CustomPurchaseOrder(PurchaseOrder):
             and self.per_billed == 0
             and self.status != "Closed"
         ):
-            return "Followup"
+            return {"status": "Followup"}
 
         # Partially Receive
         if self.docstatus == 1 and 0 < self.per_received < 100:
-            return "Partially Receive"
+            return {"status": "Partially Receive"}
          # Receive
         if self.docstatus == 1 and self.per_received == 100:
-            return "Receive"
+            return {"status": "Receive"}
         return super().get_status()
 
 

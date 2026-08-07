@@ -12,11 +12,11 @@ class CustomSalesOrder(SalesOrder):
             and self.per_billed == 0
             and self.status != "Closed"
         ):
-            return "In Progress"
+            return {"status": "In Progress"}
 
         # Partially Delivered
         if self.docstatus == 1 and 0 < self.per_delivered < 100:
-            return "Partially Deliver"
+            return {"status": "Partially Deliver"}
         return super().get_status()
 
     def set_status(self, update=False, status=None, update_modified=True):

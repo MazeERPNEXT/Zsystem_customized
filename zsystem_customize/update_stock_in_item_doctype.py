@@ -77,18 +77,18 @@ class CustomDeliveryNote(UpdateStockMixin['CustomDeliveryNote'],DeliveryNote):
 
             # Most specific first: Return DC
             if self.is_return:
-                return "Return DC"
+                return {"status": "Return DC"}
 
             # Check if return created against this DN
             if self.has_return_against():
-                return "Return Issued"
+                return {"status": "Return Issued"}
 
             # Completed after Sales Invoice is linked
             if self.per_billed >= 100:
-                return "Completed"
+                return {"status": "Completed"}
 
             # Default returnable state
-            return "Outstanding Item"
+            return {"status": "Outstanding Item"}
 
         return super().get_status()
 

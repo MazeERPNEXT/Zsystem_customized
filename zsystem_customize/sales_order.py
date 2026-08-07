@@ -61,6 +61,7 @@
 #         """
 #         frappe.throw(message)
 import frappe
+from erpnext.accounts.party import CROSS_PARTY_FIELD_NO_MAP
 import re
 from frappe.utils import flt
 @frappe.whitelist()
@@ -235,3 +236,90 @@ def set_stock_status(doc,method):
         doc.custom_stock_status = "Partially Stock"
     else:
         doc.custom_stock_status = "Fully Stock"
+
+        # =========================================================
+# CUSTOM MAKE PURCHASE ORDER (filters strictly by row name,
+# avoids core's item_code+supplier matching which breaks
+# when Supplier is blank on Sales Order Item rows)
+# =========================================================
+
+from frappe.model.mapper import get_mapped_doc
+from erpnext.stock.doctype.packed_item.packed_item import is_product_bundle
+
+@frappe.whitelist()
+def custom_make_purchase_order(source_name, selected_items=None):
+    """
+    Creates a single Purchase Order from selected Sales Order Item rows,
+    matched strictly by child row `name` instead of item_code+supplier.
+    """
+    import json
+
+    if not selected_items:
+        frappe.throw("Please select at least one item")
+
+    if isinstance(selected_items, str):
+        selected_items = json.loads(selected_items)
+
+    selected_row_names = {d.get("name") for d in selected_items if d.get("name")}
+
+    if not selected_row_names:
+        frappe.throw("No valid items selected")
+
+    def filter_items(item):
+        return (
+            item.name in selected_row_names
+            and flt(item.ordered_qty) < flt(item.stock_qty)
+            and not is_product_bundle(item.item_code)
+        )
+
+    def update_item(source, target, source_parent):
+        target.schedule_date = source.delivery_date
+        target.qty = flt(source.qty) - (flt(source.ordered_qty) / flt(source.conversion_factor))
+        target.stock_qty = flt(source.stock_qty) - flt(source.ordered_qty)
+        target.project = source_parent.project
+
+    def set_missing_values(source, target):
+        target.customer = ""
+        target.customer_name = ""
+        target.inter_company_order_reference = ""
+        target.run_method("set_missing_values")
+        target.run_method("calculate_taxes_and_totals")
+
+    doc = get_mapped_doc(
+        "Sales Order",
+        source_name,
+        {
+            "Sales Order": {
+                "doctype": "Purchase Order",
+                "field_no_map": [*CROSS_PARTY_FIELD_NO_MAP],
+                "validation": {"docstatus": ["=", 1]},
+            },
+            "Sales Order Item": {
+                "doctype": "Purchase Order Item",
+                "field_map": [
+                    ["name", "sales_order_item"],
+                    ["parent", "sales_order"],
+                    ["stock_uom", "stock_uom"],
+                    ["uom", "uom"],
+                    ["conversion_factor", "conversion_factor"],
+                    ["delivery_date", "schedule_date"],
+                ],
+                "field_no_map": [
+                    "rate",
+                    "price_list_rate",
+                    "item_tax_template",
+                    "discount_percentage",
+                    "discount_amount",
+                    "pricing_rules",
+                    "margin_type",
+                    "margin_rate_or_amount",
+                ],
+                "postprocess": update_item,
+                "condition": filter_items,
+            },
+        },
+        target_doc=None,
+        postprocess=set_missing_values,
+    )
+
+    return doc

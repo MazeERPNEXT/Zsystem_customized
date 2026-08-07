@@ -752,10 +752,14 @@ zsystem_customize.selling.SalesOrderController = class CustomSalesOrderControlle
 				dialog.hide();
  
 				var method = args.against_default_supplier
-					? "make_purchase_order_for_default_supplier"
-					: "make_purchase_order";
-				return frappe.call({
-					method: "erpnext.selling.doctype.sales_order.sales_order." + method,
+    ? "make_purchase_order_for_default_supplier"
+    : "custom_make_purchase_order";
+
+var call_method = args.against_default_supplier
+    ? "erpnext.selling.doctype.sales_order.sales_order." + method
+	    : "zsystem_customize.sales_order." + method;
+return frappe.call({
+    method: call_method,
 					freeze_message: __("Creating Purchase Order ..."),
 					args: {
 						source_name: me.frm.doc.name,
@@ -763,11 +767,12 @@ zsystem_customize.selling.SalesOrderController = class CustomSalesOrderControlle
 					},
 					freeze: true,
 					callback: function (r) {
-						if (!r.exc) {
-							if (!args.against_default_supplier) {
-								frappe.model.sync(r.message);
-								frappe.set_route("Form", r.message.doctype, r.message.name);
-							} else {
+					    if (!r.exc) {
+       						 if (!args.against_default_supplier) {
+  					    	      frappe.model.sync(r.message);
+        					      let doc = Array.isArray(r.message) ? r.message[0] : r.message;
+   					              frappe.set_route("Form", doc.doctype, doc.name);
+       						 } else {
 								frappe.route_options = {
 									sales_order: me.frm.doc.name,
 								};
@@ -831,7 +836,6 @@ zsystem_customize.selling.SalesOrderController = class CustomSalesOrderControlle
 		set_po_items_data(dialog);
 		dialog.get_field("items_for_po").grid.only_sortable();
 		dialog.get_field("items_for_po").refresh();
-		dialog.wrapper.find(".grid-heading-row .grid-row-check").click();
 		dialog.show();
 	}
 	get_ordered_qty(item, so) {
