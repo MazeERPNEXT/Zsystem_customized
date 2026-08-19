@@ -32,12 +32,12 @@ frappe.ui.form.on("Sales Invoice",{
         }
     },
     refresh: function(frm){
-        // if (frm.doc.docstatus == 1){
-        //     $('.icon-btn[data-original-title = "Print"]').show();
-        // }
-        // else{
-        //     $('.icon-btn[data-original-title = "Print"]').hide();
-        // }
+        if (frm.doc.docstatus == 1){
+            $('.icon-btn[data-original-title = "Print"]').show();
+        }
+        else{
+            $('.icon-btn[data-original-title = "Print"]').hide();
+        }
         frm.fields_dict.custom_created_by.$wrapper
             .find('.control-value')
             .css('color', 'black');

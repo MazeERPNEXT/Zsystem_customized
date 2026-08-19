@@ -14,12 +14,12 @@ frappe.ui.form.on("Delivery Note Item",{
 frappe.ui.form.on("Delivery Note", {
 
     refresh(frm) {
-        // if (frm.doc.docstatus == 1){
-        //     $('.icon-btn[data-original-title = "Print"]').show();
-        // }
-        // else{
-        //     $('.icon-btn[data-original-title = "Print"]').hide();
-        // }
+        if (frm.doc.docstatus == 1){
+            $('.icon-btn[data-original-title = "Print"]').show();
+        }
+        else{
+            $('.icon-btn[data-original-title = "Print"]').hide();
+        }
         frm.fields_dict.custom_modified_by.$wrapper
             .find('.control-value')
             .css('color', 'black');

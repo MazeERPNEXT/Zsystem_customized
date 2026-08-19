@@ -1223,6 +1223,11 @@
       }
     },
     refresh: function(frm) {
+      if (frm.doc.docstatus == 1) {
+        $('.icon-btn[data-original-title = "Print"]').show();
+      } else {
+        $('.icon-btn[data-original-title = "Print"]').hide();
+      }
       frm.fields_dict.custom_created_by.$wrapper.find(".control-value").css("color", "black");
     },
     async customer(frm) {
@@ -1264,6 +1269,11 @@
   });
   frappe.ui.form.on("Delivery Note", {
     refresh(frm) {
+      if (frm.doc.docstatus == 1) {
+        $('.icon-btn[data-original-title = "Print"]').show();
+      } else {
+        $('.icon-btn[data-original-title = "Print"]').hide();
+      }
       frm.fields_dict.custom_modified_by.$wrapper.find(".control-value").css("color", "black");
       if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
         frm.page.set_indicator(
@@ -2344,4 +2354,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.CRUCUM3J.js.map
+//# sourceMappingURL=zsystem_customize.bundle.6TNEY5U6.js.map

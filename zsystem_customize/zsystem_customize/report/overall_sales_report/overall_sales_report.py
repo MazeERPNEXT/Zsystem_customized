@@ -291,17 +291,14 @@ def get_sales_order_data(filters):
 
             WHERE so.docstatus != 2
             {conditions}
+            AND (
+                so.status != 'Partially Deliver'
+                OR (so.status = 'Partially Deliver' AND COALESCE(soi.custom_delivery_qty,0) != soi.qty)
+            )
 
             ORDER BY so.transaction_date, so.name, soi.idx
-        ) AS subquery
-        WHERE (
-            subquery.status != 'Partially Deliver'
-            OR (
-                subquery.status = 'Partially Deliver'
-                AND subquery.custom_delivery_qty != subquery.qty
-            )
-        )
-    """, as_dict=1)
+    ) AS subquery
+""", as_dict=1)
 
 def get_delivery_note_data(filters):
 
