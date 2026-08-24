@@ -4,6 +4,9 @@ from erpnext.buying.doctype.purchase_order.purchase_order import PurchaseOrder
 class CustomPurchaseOrder(PurchaseOrder):
 
     def get_status(self):
+        # Receive -> Completed
+        if self.docstatus == 1 and self.per_billed == 100 and self.per_received == 100:
+            return {"status": "Completed"}
 
         # Replace "To Deliver and Bill" with "FollowUp"
         if (
@@ -39,7 +42,7 @@ class CustomPurchaseOrder(PurchaseOrder):
         # Partially Receiveed
         elif self.docstatus == 1 and 0 < self.per_received < 100:
             new_status = "Partially Receive"
-        elif self.docstatus == 1 and self.per_received == 100:
+        elif self.docstatus == 1 and self.per_received == 100 and self.per_billed == 0:
             new_status = "Receive"
 
         if new_status:
@@ -57,6 +60,16 @@ class CustomPurchaseOrder(PurchaseOrder):
         super().set_status(update, status, update_modified)
 
     def update_status(self, status=None, update_modified=True):
+        # Receive -> Completed
+        if self.docstatus == 1 and self.per_billed == 100 and self.per_received == 100:
+            self.status = "Completed"
+
+            self.db_set(
+                "status",
+                "Completed",
+                update_modified=update_modified
+            )
+            return
 
         # Followup
         if (
@@ -75,7 +88,7 @@ class CustomPurchaseOrder(PurchaseOrder):
             return
 
         # Partially Receiveed
-        if self.docstatus == 1 and self.per_received == 100:
+        if self.docstatus == 1 and 0 < self.per_received < 100:
             self.status = "Partially Receive"
 
             self.db_set(
@@ -85,7 +98,7 @@ class CustomPurchaseOrder(PurchaseOrder):
             )
             return
         #  Receive
-        if self.docstatus == 1 and self.per_received == 100:
+        if self.docstatus == 1 and self.per_received == 100 and self.per_billed == 0:
             self.status = "Receive"
 
             self.db_set(

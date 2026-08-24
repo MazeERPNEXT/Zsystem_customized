@@ -2,6 +2,11 @@ frappe.listview_settings['Purchase Order'] = {
     add_fields: ["status","per_received","per_billed"],
 
     get_indicator(doc) {
+        if (doc.docstatus === 1 &&
+            doc.per_billed == 100
+        ) {
+            return [__("Completed"), "green"];
+        }
         if (
             doc.docstatus === 1 &&
             doc.per_received == 100
