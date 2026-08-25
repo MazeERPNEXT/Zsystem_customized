@@ -1475,7 +1475,8 @@
             }
           }
         }
-      })(frm.doc.items || []).forEach((row) => {
+      });
+      (frm.doc.items || []).forEach((row) => {
         fetch_last_purchase_rate(frm, row.doctype, row.name);
       });
     },
@@ -2354,4 +2355,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.6TNEY5U6.js.map
+//# sourceMappingURL=zsystem_customize.bundle.DKP2SQU7.js.map

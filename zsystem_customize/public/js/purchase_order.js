@@ -39,7 +39,7 @@ frappe.ui.form.on("Purchase Order",{
                     }
                 }
             }
-        })
+        });
          (frm.doc.items || []).forEach(row => {
             fetch_last_purchase_rate(frm, row.doctype, row.name);
         });
