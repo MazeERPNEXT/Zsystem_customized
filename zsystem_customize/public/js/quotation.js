@@ -163,23 +163,27 @@ function set_sales_person_by_user(frm) {
 function set_fiscal_year_prefix(frm) {
 
     if (!frm.doc.__islocal || frm.fy_code) return;
+    const today = frappe.datetime.get_today();
 
     frappe.call({
         method: "frappe.client.get_list",
         args: {
             doctype: "Fiscal Year",
-            fields: ["name"],
-            order_by: "year_start_date desc",
+            filters: [
+                ["year_start_date", "<=", today],
+                ["year_end_date", ">=", today]
+            ],
+            fields: ["name", "year_start_date", "year_end_date"],
             limit_page_length: 1
         },
         callback(r) {
             if (!r.message || !r.message.length) return;
 
-            let fy = r.message[0].name;     // 2025-2026
+            let fy = r.message[0].name; // Example: 2026-2027
             let parts = fy.split("-");
 
             if (parts.length === 2) {
-                frm.fy_code = parts[0].slice(-2) + parts[1].slice(-2); // 2526
+                frm.fy_code = parts[0].slice(-2) + parts[1].slice(-2); 
                 set_naming_series(frm);
             }
         }

@@ -224,6 +224,12 @@ def update_sales_order_balance_qty(doc, method=None):
         else:
             item.custom_delivery_status = "Delivered"
 
+# //Populate item stock qty from Item master before checking stock status
+def update_item_stock_qty(doc,method):
+    for item in doc.items:
+        if item.item_code:
+            stock_qty = frappe.db.get_value("Item",item.item_code,"custom_stock_qty")
+            item.custom_stock_qty = stock_qty
 
 # //Update stock status based on stock qty
 def set_stock_status(doc,method):
@@ -237,7 +243,7 @@ def set_stock_status(doc,method):
     else:
         doc.custom_stock_status = "Fully Stock"
 
-        # =========================================================
+# =========================================================
 # CUSTOM MAKE PURCHASE ORDER (filters strictly by row name,
 # avoids core's item_code+supplier matching which breaks
 # when Supplier is blank on Sales Order Item rows)

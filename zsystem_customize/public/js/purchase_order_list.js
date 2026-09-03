@@ -2,6 +2,11 @@ frappe.listview_settings['Purchase Order'] = {
     add_fields: ["status","per_received","per_billed"],
 
     get_indicator(doc) {
+        if (doc.docstatus === 1 &&
+            doc.per_billed == 100
+        ) {
+            return [__("Completed"), "green"];
+        }
         if (
             doc.docstatus === 1 &&
             doc.per_received == 100
@@ -145,5 +150,8 @@ frappe.listview_settings['Purchase Order'] = {
                 observer.disconnect();
             });
         });
-    }
+        setTimeout(() => {
+            listview.page.wrapper.find('.standard-filter-section [data-fieldname="supplier_name"]').closest('.form-group').hide();
+        }, 500);
+    },
 };

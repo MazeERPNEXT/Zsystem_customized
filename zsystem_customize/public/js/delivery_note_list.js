@@ -63,6 +63,10 @@ frappe.listview_settings['Delivery Note'] = {
             if (doc.status === "To Bill") {
                 return [__("To Bill"), "orange", "status,=,To Bill"];
             }
+            if (doc.status === "Partially Billed") {
+                return [__("Partially Billed"), "orange", "status,=,Partially Billed"];
+            }
+
 
             if (doc.status === "Closed") {
                 return [__("Closed"), "green", "status,=,Closed"];

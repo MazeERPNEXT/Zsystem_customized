@@ -351,12 +351,16 @@
   function set_fiscal_year_prefix(frm) {
     if (!frm.doc.__islocal || frm.fy_code)
       return;
+    const today = frappe.datetime.get_today();
     frappe.call({
       method: "frappe.client.get_list",
       args: {
         doctype: "Fiscal Year",
-        fields: ["name"],
-        order_by: "year_start_date desc",
+        filters: [
+          ["year_start_date", "<=", today],
+          ["year_end_date", ">=", today]
+        ],
+        fields: ["name", "year_start_date", "year_end_date"],
         limit_page_length: 1
       },
       callback(r) {
@@ -1479,7 +1483,8 @@
             }
           }
         }
-      })(frm.doc.items || []).forEach((row) => {
+      });
+      (frm.doc.items || []).forEach((row) => {
         fetch_last_purchase_rate(frm, row.doctype, row.name);
       });
     },
@@ -2359,4 +2364,4 @@
     }
   });
 })();
-//# sourceMappingURL=zsystem_customize.bundle.UFEF4WWH.js.map
+//# sourceMappingURL=zsystem_customize.bundle.B4EM4SCJ.js.map

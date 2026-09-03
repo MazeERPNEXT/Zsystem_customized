@@ -39,7 +39,8 @@ doctype_list_js = {
     "Delivery Note": "public/js/delivery_note_list.js",
     "Sales Order":"public/js/sales_order_list.js",
     "Item": "public/js/item_list.js",
-    "Purchase Order": "public/js/purchase_order_list.js"
+    "Purchase Order": "public/js/purchase_order_list.js",
+    "Purchase Invoice": "public/js/purchase_invoice_list.js"
     }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -155,7 +156,7 @@ doc_events = {
     },
     "Sales Order": {
         "before_save": "zsystem_customize.sales_order.update_sales_order_balance_qty",
-        "validate":"zsystem_customize.sales_order.set_stock_status"
+        "validate":["zsystem_customize.sales_order.set_stock_status","zsystem_customize.sales_order.update_item_stock_qty"]
     },
     "Item": {
         "before_insert": "zsystem_customize.item.set_default_warehouse",
