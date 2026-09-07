@@ -80,7 +80,7 @@ frappe.query_reports["Overall Sales Report"] = {
 
                     options = [
                         "",
-                        "Returnable DC",
+                        "Outstanding Item",
                         "Return DC",
                         "Return Issued",
                         "Completed",
@@ -140,5 +140,16 @@ frappe.query_reports["Overall Sales Report"] = {
             label : "Customer Purchase Order",
             fieldtype :"Data",
         }
-    ]
+    ],
+    // formatter: function (value, row, column, data, default_formatter) {
+    //     value = default_formatter(value, row, column, data);
+
+    //     if (column.fieldname === "name" && data && data.name && data.doctype_name) {
+    //         return `<a href="/app/${frappe.router.slug(data.doctype_name)}/${encodeURIComponent(data.name)}">
+    //             ${data.name}
+    //         </a>`;
+    //     }
+
+    //     return value;
+    // }
 };

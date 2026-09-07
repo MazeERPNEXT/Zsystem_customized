@@ -26,6 +26,12 @@ def get_columns(filters=None):
             "options": "doctype_name",
             "width": 180
         },
+        # {
+        #     "label": "ID",
+        #     "fieldname": "name",
+        #     "fieldtype": "Data",
+        #     "width": 180
+        # },
         {
             "label": "Customer",
             "fieldname": "customer",
