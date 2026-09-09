@@ -13,3 +13,4 @@ import './customer';
 import './supplier';
 import './purchase_order';
 import './override_so';
+import './material_request';

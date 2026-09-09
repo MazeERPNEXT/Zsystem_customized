@@ -60,33 +60,81 @@ def update_so_material_status(doc, method):
 
 
 def update_so_material_status_on_receipt(doc, method):
-    po_item_names = {d.purchase_order_item for d in doc.items if d.purchase_order_item}
-    if not po_item_names:
+    sales_orders = set()
+
+    # ---------------------------------------------------------
+    # Purchase Receipt
+    # ---------------------------------------------------------
+    if doc.doctype == "Purchase Receipt":
+
+        for item in doc.items:
+            if not item.purchase_order:
+                continue
+
+            po_items = frappe.db.get_all(
+                "Purchase Order Item",
+                filters={
+                    "parent": item.purchase_order,
+                    "sales_order": ["is", "set"]
+                },
+                fields=["sales_order"]
+            )
+
+            for po_item in po_items:
+                if po_item.sales_order:
+                    sales_orders.add(po_item.sales_order)
+
+        # Cancelled Purchase Receipt
+        if doc.docstatus == 2:
+            status = "Waiting for Material"
+        else:
+            status = "Material Receive"
+
+    # ---------------------------------------------------------
+    # Purchase Invoice
+    # ---------------------------------------------------------
+    elif doc.doctype == "Purchase Invoice":
+
+        # Only consider Purchase Invoice if Update Stock is checked
+        if not doc.update_stock:
+            return
+
+        for item in doc.items:
+            if not item.purchase_order:
+                continue
+
+            po_items = frappe.db.get_all(
+                "Purchase Order Item",
+                filters={
+                    "parent": item.purchase_order,
+                    "sales_order": ["is", "set"]
+                },
+                fields=["sales_order"]
+            )
+
+            for po_item in po_items:
+                if po_item.sales_order:
+                    sales_orders.add(po_item.sales_order)
+
+        # Cancelled Purchase Invoice
+        if doc.docstatus == 2:
+            status = "Waiting for Material"
+        else:
+            status = "Material Receive"
+
+    else:
         return
 
-    purchase_order_item = frappe.db.get_all(
-        "Purchase Order Item",
-        filters={"name": ["in", list(po_item_names)]},
-        fields = ["parent","sales_order"]
-    )
-    sales_orders = {}
-
-    for item in purchase_order_item:
-        if not item.sales_order:
-            continue
-    po_status = frappe.db.get_value("Purchase Order",item.parent,"status")
-
-    if doc.docstatus == 2:
-        sales_orders[item.sales_order] = "Waiting for Material"
-    else:
-        if po_status == "Receive":
-            sales_orders[item.sales_order] = "Material Receive"
-        else:
-            sales_orders[item.sales_order] = "Waiting for Material"
-
-
-    for so, status in sales_orders.items():
-        frappe.db.set_value("Sales Order", so, "custom_pomaterial_status", status)
+    # ---------------------------------------------------------
+    # Update Sales Order
+    # ---------------------------------------------------------
+    for sales_order in sales_orders:
+        frappe.db.set_value(
+            "Sales Order",
+            sales_order,
+            "custom_pomaterial_status",
+            status
+        )
 
 # Direct po validate for if already have qty in stock
 @frappe.whitelist()

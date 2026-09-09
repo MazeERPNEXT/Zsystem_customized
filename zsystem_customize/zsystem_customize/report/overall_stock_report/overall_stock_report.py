@@ -640,7 +640,7 @@ def get_sle_conditions(filters):
 		if warehouse_condition:
 			conditions.append(warehouse_condition)
 	if filters.get("voucher_no"):
-		conditions.append("voucher_no=%(voucher_no)s")
+		conditions.append("voucher_no LIKE %(voucher_no)s")
 	if filters.get("batch_no"):
 		conditions.append("batch_no=%(batch_no)s")
 	if filters.get("project"):
