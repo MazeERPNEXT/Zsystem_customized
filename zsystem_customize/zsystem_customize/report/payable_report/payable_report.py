@@ -107,24 +107,53 @@ def get_data(filters):
             due_date,
             bill_no,
             bill_date,
+
             CASE
-                WHEN disable_rounded_total = 1 THEN grand_total
+                WHEN disable_rounded_total = 1
+                    THEN grand_total
                 ELSE rounded_total
             END AS total,
+
             outstanding_amount,
+
             CASE
                 WHEN disable_rounded_total = 1
                     THEN (grand_total - outstanding_amount)
                 ELSE (rounded_total - outstanding_amount)
             END AS paid_amount
+
         FROM `tabPurchase Invoice`
+
         WHERE docstatus = 1
           AND posting_date BETWEEN %(from_date)s AND %(to_date)s
     """
-    if filters.get("supplier"):
-        query += " AND supplier = %(supplier)s"
 
-    query += " ORDER BY posting_date DESC"
+    # Supplier filter
+    if filters.get("supplier"):
+        query += """
+            AND supplier = %(supplier)s
+        """
+
+    # Payment Status filter
+    if filters.get("payment_status") == "Paid":
+        query += """
+            AND (
+                CASE
+                    WHEN disable_rounded_total = 1
+                        THEN (grand_total - outstanding_amount)
+                    ELSE (rounded_total - outstanding_amount)
+                END
+            ) != 0
+        """
+
+    elif filters.get("payment_status") == "Outstanding":
+        query += """
+            AND outstanding_amount != 0
+        """
+
+    query += """
+        ORDER BY posting_date DESC
+    """
 
     return frappe.db.sql(query, filters, as_dict=True)
 
