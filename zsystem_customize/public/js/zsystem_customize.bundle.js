@@ -14,3 +14,6 @@ import './supplier';
 import './purchase_order';
 import './override_so';
 import './material_request';
+import './bom';
+import './work_order';
+import './stock_entry';

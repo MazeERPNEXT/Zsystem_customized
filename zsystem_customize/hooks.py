@@ -184,7 +184,16 @@ doc_events = {
     },
     "Supplier":{
         "validate":"zsystem_customize.supplier.validate_supplier"
-    }
+    },
+    "BOM": {
+        "on_submit": "zsystem_customize.bom.bom_set_so_data"
+    },
+    "Stock Entry": {
+        "on_update": "zsystem_customize.stock_entry.sent_email_for_panelteam"
+    },
+    # "Work Order": {
+    #     "before_insert":"zsystem_customize.bom.set_sales_order_in_work_order"
+    # }
 	# "*": {
 	# 	"on_update": "method",
 	# 	"on_cancel": "method",

@@ -70,10 +70,10 @@ def validate_so_stock(doctype, name):
     error_rows = []
 
     for item in doc.items:
-        if not item.warehouse:
-            frappe.throw(
-                f"Please select a Warehouse for item <b>{item.item_code}</b>"
-            )
+        # if not item.warehouse:
+        #     frappe.throw(
+        #         f"Please select a Warehouse for item <b>{item.item_code}</b>"
+        #     )
 
         actual_qty = frappe.db.get_value(
             "Bin",
@@ -225,11 +225,19 @@ def update_sales_order_balance_qty(doc, method=None):
             item.custom_delivery_status = "Delivered"
 
 # //Populate item stock qty from Item master before checking stock status
-def update_item_stock_qty(doc,method):
+
+def update_item_stock_qty(doc, method=None):
     for item in doc.items:
-        if item.item_code:
-            stock_qty = frappe.db.get_value("Item",item.item_code,"custom_stock_qty")
-            item.custom_stock_qty = stock_qty
+        if not item.item_code:
+            continue
+
+        stock_qty = frappe.db.get_value(
+            "Item",
+            item.item_code,
+            "custom_stock_qty"
+        )
+
+        item.custom_item_stock_qty = stock_qty or 0
 
 # //Update stock status based on stock qty
 def set_stock_status(doc,method):

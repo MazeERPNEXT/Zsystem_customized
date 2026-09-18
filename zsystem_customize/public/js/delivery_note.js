@@ -79,6 +79,13 @@ frappe.ui.form.on("Delivery Note", {
 
         }
     },
+    //set value based on bom items
+    onload: function(frm){
+        set_value_based_on_bom_item(frm);
+    },
+    custom_bom_no: function(frm){
+        set_value_based_on_bom_item(frm);
+    },
     before_submit: async function(frm) {
         for (let row of frm.doc.items || []) {
             if (row.item_code) {
@@ -173,4 +180,10 @@ function set_filter_serialno_based_item(frm) {
             }
         };
     });
+}
+//set bom item based on bom
+function set_value_based_on_bom_item(frm){
+    if (!custom_bom_no){
+        return;
+    }
 }

@@ -80,3 +80,5 @@ class CustomSalesOrder(SalesOrder):
             return
 
         super().update_status(status, update_modified)
+    def validate_warehouse(self):
+        pass
