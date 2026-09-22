@@ -162,7 +162,7 @@ doc_events = {
         "before_insert": "zsystem_customize.item.set_default_warehouse",
     },
     "Purchase Order": {
-        "validate": "zsystem_customize.purchase_order.validate_so_rate",
+        "validate": ["zsystem_customize.purchase_order.validate_so_rate","zsystem_customize.purchase_order.validate_contact_no"],
         "on_submit": "zsystem_customize.purchase_order.update_so_material_status",
         "on_cancel": "zsystem_customize.purchase_order.update_so_material_status",
     },
@@ -191,6 +191,9 @@ doc_events = {
     "Stock Entry": {
         "on_update": "zsystem_customize.stock_entry.sent_email_for_panelteam"
     },
+    "Zsystem Contact Person":{
+        "validate":"zsystem_customize.zsystem_customize.doctype.zsystem_contact_person.zsystem_contact_person.validate_contact_no"
+    }
     # "Work Order": {
     #     "before_insert":"zsystem_customize.bom.set_sales_order_in_work_order"
     # }

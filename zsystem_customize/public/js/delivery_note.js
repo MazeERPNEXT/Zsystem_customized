@@ -14,12 +14,12 @@ frappe.ui.form.on("Delivery Note Item",{
 frappe.ui.form.on("Delivery Note", {
 
     refresh(frm) {
-        // if (frm.doc.docstatus == 1){
-        //     $('.icon-btn[data-original-title = "Print"]').show();
-        // }
-        // else{
-        //     $('.icon-btn[data-original-title = "Print"]').hide();
-        // }
+        if (frm.doc.docstatus == 1){
+            $('.icon-btn[data-original-title = "Print"]').show();
+        }
+        else{
+            $('.icon-btn[data-original-title = "Print"]').hide();
+        }
         frm.fields_dict.custom_modified_by.$wrapper
             .find('.control-value')
             .css('color', 'black');
@@ -80,11 +80,21 @@ frappe.ui.form.on("Delivery Note", {
         }
     },
     //set value based on bom items
-    onload: function(frm){
-        set_value_based_on_bom_item(frm);
+    onload: function (frm) {
+        // Populate only if the table is empty
+        if (
+            frm.doc.custom_bom_no &&
+            (!frm.doc.custom_raw_materials ||
+                frm.doc.custom_raw_materials.length === 0)
+        ) {
+            set_value_based_on_bom_item(frm);
+        }
     },
-    custom_bom_no: function(frm){
-        set_value_based_on_bom_item(frm);
+
+    custom_bom_no: function (frm) {
+        if (frm.doc.custom_bom_no) {
+            set_value_based_on_bom_item(frm);
+        }
     },
     before_submit: async function(frm) {
         for (let row of frm.doc.items || []) {
@@ -181,9 +191,61 @@ function set_filter_serialno_based_item(frm) {
         };
     });
 }
-//set bom item based on bom
-function set_value_based_on_bom_item(frm){
-    if (!custom_bom_no){
+//set value in custom_raw_material based on bom
+async function set_value_based_on_bom_item(frm) {
+    if (!frm.doc.custom_bom_no) {
         return;
+    }
+
+    try {
+        let r = await frappe.call({
+            method: "frappe.client.get",
+            args: {
+                doctype: "BOM",
+                name: frm.doc.custom_bom_no
+            }
+        });
+
+        if (!r.message) {
+            return;
+        }
+
+        let bom = r.message;
+
+        // Clear existing rows
+        frm.clear_table("custom_raw_materials");
+
+        // Add BOM items
+        for (let bom_item of bom.items || []) {
+            let row = frm.add_child("custom_raw_materials");
+
+            // Directly assign BOM values
+            row.item_code = bom_item.item_code || "";
+            row.item_name = bom_item.item_name || "";
+            row.description = bom_item.description || "";
+            row.qty = bom_item.qty || 0;
+            row.uom = bom_item.uom || "";
+            row.stock_uom = bom_item.stock_uom || "";
+            row.conversion_factor = bom_item.conversion_factor || 1;
+
+            // Rate from BOM
+            row.rate = flt(bom_item.rate);
+
+            // Amount from BOM
+            row.amount = flt(bom_item.amount);
+        }
+
+        frm.refresh_field("custom_raw_materials");
+
+        frm.dirty();
+
+    } catch (error) {
+        console.error("Error loading BOM items:", error);
+
+        frappe.msgprint({
+            title: __("Error"),
+            message: __("Unable to load BOM raw materials."),
+            indicator: "red"
+        });
     }
 }

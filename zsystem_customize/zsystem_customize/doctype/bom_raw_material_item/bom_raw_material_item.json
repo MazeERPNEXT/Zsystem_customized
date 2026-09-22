@@ -45,8 +45,7 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Qty",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "uom",
@@ -54,8 +53,7 @@
    "in_list_view": 1,
    "label": "UOM",
    "options": "UOM",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "stock_uom",
@@ -77,8 +75,7 @@
    "in_list_view": 1,
    "label": "Rate",
    "options": "currency",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "amount",
@@ -93,7 +90,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-09-17 17:55:10.811901",
+ "modified": "2026-09-19 11:56:19.163194",
  "modified_by": "vignesh@mazeworkssolutions.com",
  "module": "Zsystem Customize",
  "name": "BOM Raw Material Item",

@@ -11,7 +11,7 @@ frappe.ui.form.on("Stock Entry", {
 function set_sales_order_value(frm) {
 
     if (!frm.doc.work_order) {
-        frm.set_value("custom_sales_order_no", "");
+        // frm.set_value("custom_sales_order_no", "");
         return;
     }
 

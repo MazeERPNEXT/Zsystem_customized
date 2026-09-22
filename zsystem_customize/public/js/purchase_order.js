@@ -44,59 +44,95 @@ frappe.ui.form.on("Purchase Order",{
             fetch_last_purchase_rate(frm, row.doctype, row.name);
         });
     },
-    before_submit: function(frm) {
-    return new Promise((resolve, reject) => {
-        frappe.call({
-            method: "zsystem_customize.purchase_order.validate_stock_against_qty",
-            args: {
-                doctype: frm.doctype,
-                name: frm.doc.name,
-            },
-            callback: function(r) {
-                if (!r.message || !r.message.has_error) {
-                    resolve();
-                    return;
+    refresh: function(frm){
+        frm.fields_dict.custom_created_by.$wrapper
+            .find('.control-value')
+            .css('color', 'black');
+    },
+    onload: function(frm){
+        if (frm.is_new() && !frm.doc.custom_created_by) {
+            frappe.db.get_value(
+                "User",
+                frappe.session.user,
+                "full_name"
+            ).then(r => {
+                if (r.message) {
+                    frm.set_value("custom_created_by", r.message.full_name);
                 }
+            });
+        }
+    },
+    before_submit: function(frm) {
+        return new Promise((resolve, reject) => {
+            frappe.call({
+                method: "zsystem_customize.purchase_order.validate_stock_against_qty",
+                args: {
+                    doctype: frm.doctype,
+                    name: frm.doc.name,
+                },
+                callback: function(r) {
+                    if (!r.message || !r.message.has_error) {
+                        resolve();
+                        return;
+                    }
 
-                let d = new frappe.ui.Dialog({
-                    title: "Stock Warning",
-                    size: "large",
-                    fields: [
-                        {
-                            fieldtype: "HTML",
-                            fieldname: "stock_html",
-                            options: r.message.html
-                        },
-                        {
-                            fieldtype: "Check",
-                            fieldname: "confirm_submit",
-                            label: "I have reviewed the stock warning and want to continue.",
-                            onchange: function() {
-                                let checked = d.get_value("confirm_submit");
+                    let d = new frappe.ui.Dialog({
+                        title: "Stock Warning",
+                        size: "large",
+                        fields: [
+                            {
+                                fieldtype: "HTML",
+                                fieldname: "stock_html",
+                                options: r.message.html
+                            },
+                            {
+                                fieldtype: "Check",
+                                fieldname: "confirm_submit",
+                                label: "I have reviewed the stock warning and want to continue.",
+                                onchange: function() {
+                                    let checked = d.get_value("confirm_submit");
 
-                                if (checked) {
-                                    d.get_primary_btn().show();
-                                } else {
-                                    d.get_primary_btn().hide();
+                                    if (checked) {
+                                        d.get_primary_btn().show();
+                                    } else {
+                                        d.get_primary_btn().hide();
+                                    }
                                 }
                             }
+                        ],
+                        primary_action_label: "Submit",
+                        primary_action() {
+                            d.hide();
+                            resolve();
                         }
-                    ],
-                    primary_action_label: "Submit",
-                    primary_action() {
-                        d.hide();
-                        resolve();
-                    }
-                });
+                    });
 
-                d.show();
+                    d.show();
 
-                // Hide Submit button initially
-                d.get_primary_btn().hide();
-            }
+                    // Hide Submit button initially
+                    d.get_primary_btn().hide();
+                }
+            });
         });
-    });
-}
+    },
+    custom_created_by: function(frm) {
+        if (!frm.doc.custom_created_by) {
+            frm.set_value("custom_concern_person", "");
+            return;
+        }
+
+        frappe.db.exists("Zsystem Contact Person", frm.doc.custom_created_by)
+            .then(exists => {
+                if (exists) {
+                    frm.set_value(
+                        "custom_concern_person",
+                        frm.doc.custom_created_by
+                    );
+                } else {
+                    frm.set_value("custom_concern_person", "");
+                }
+            });
+    }
 })
 // last purchase rate and date
 frappe.ui.form.on("Purchase Order Item", {

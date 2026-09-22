@@ -1,7 +1,26 @@
+import frappe
 from erpnext.buying.doctype.purchase_order.purchase_order import PurchaseOrder
-
+import erpnext.buying.utils
 
 class CustomPurchaseOrder(PurchaseOrder):
+    def validate(self):
+        original_validate_stock_item_warehouse = (
+            erpnext.buying.utils.validate_stock_item_warehouse
+        )
+
+        try:
+            # Disable mandatory warehouse validation
+            erpnext.buying.utils.validate_stock_item_warehouse = (
+                lambda row, item: None
+            )
+
+            super().validate()
+
+        finally:
+            # Restore ERPNext original function
+            erpnext.buying.utils.validate_stock_item_warehouse = (
+                original_validate_stock_item_warehouse
+            )
 
     def get_status(self):
         # Receive -> Completed
@@ -109,3 +128,4 @@ class CustomPurchaseOrder(PurchaseOrder):
             return
 
         super().update_status(status, update_modified)
+    

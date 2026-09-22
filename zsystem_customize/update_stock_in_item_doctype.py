@@ -41,21 +41,39 @@ class UpdateStockMixin(Generic[T]):
 
         for sl_entry in sl_entries:
             item_code = sl_entry.item_code
-            # excluded_warehouses = ("Testing Warehouse - Z", "Sample Warehouse")
-            
+            parent_warehouse = "Non-Saleable Item - Z"
+
+            excluded_warehouses = [
+                parent_warehouse,
+                *frappe.db.get_descendants("Warehouse", parent_warehouse),
+            ]
+
+            placeholders = ", ".join(["%s"] * len(excluded_warehouses))
+
+            bins = frappe.db.sql(
+                f"""
+                    SELECT COALESCE(SUM(actual_qty), 0) AS a_qty
+                    FROM `tabBin`
+                    WHERE item_code = %s
+                    AND warehouse NOT IN ({placeholders})
+                """,
+                (item_code, *excluded_warehouses),
+                as_dict=True,
+            )
+
+            frappe.db.set_value(
+                "Item",
+                item_code,
+                "custom_stock_qty",
+                bins[0]["a_qty"],
+            )
             # bins = frappe.db.sql("""
-            #     SELECT COALESCE(SUM(actual_qty), 0) AS a_qty
-            #     FROM `tabBin`
-            #     WHERE item_code = %s
-            #     AND warehouse NOT IN (%s, %s)
-            # """, (item_code, *excluded_warehouses), as_dict=True)
-            bins = frappe.db.sql("""
-                        SELECT sum(actual_qty) as a_qty
-                        FROM `tabBin`
-                        WHERE item_code = %s
-                        group by item_code
-                    """, (item_code,), as_dict=True)
-            frappe.db.set_value("Item", item_code, "custom_stock_qty", bins[0]['a_qty']) 
+            #             SELECT sum(actual_qty) as a_qty
+            #             FROM `tabBin`
+            #             WHERE item_code = %s
+            #             group by item_code
+            #         """, (item_code,), as_dict=True)
+            # frappe.db.set_value("Item", item_code, "custom_stock_qty", bins[0]['a_qty']) 
             
 
 class CustomSubcontractingReceipt(UpdateStockMixin['CustomSubcontractingReceipt'], SubcontractingReceipt):

@@ -1282,6 +1282,11 @@
   });
   frappe.ui.form.on("Delivery Note", {
     refresh(frm) {
+      if (frm.doc.docstatus == 1) {
+        $('.icon-btn[data-original-title = "Print"]').show();
+      } else {
+        $('.icon-btn[data-original-title = "Print"]').hide();
+      }
       frm.fields_dict.custom_modified_by.$wrapper.find(".control-value").css("color", "black");
       if (frm.doc.docstatus === 1 && frm.doc.custom_returnable_dc == 1 && frm.doc.is_return == 1) {
         frm.page.set_indicator(
@@ -1306,10 +1311,14 @@
       }
     },
     onload: function(frm) {
-      set_value_based_on_bom_item(frm);
+      if (frm.doc.custom_bom_no && (!frm.doc.custom_raw_materials || frm.doc.custom_raw_materials.length === 0)) {
+        set_value_based_on_bom_item(frm);
+      }
     },
     custom_bom_no: function(frm) {
-      set_value_based_on_bom_item(frm);
+      if (frm.doc.custom_bom_no) {
+        set_value_based_on_bom_item(frm);
+      }
     },
     before_submit: async function(frm) {
       for (let row of frm.doc.items || []) {
@@ -1387,9 +1396,44 @@
       };
     });
   }
-  function set_value_based_on_bom_item(frm) {
-    if (!custom_bom_no) {
+  async function set_value_based_on_bom_item(frm) {
+    if (!frm.doc.custom_bom_no) {
       return;
+    }
+    try {
+      let r = await frappe.call({
+        method: "frappe.client.get",
+        args: {
+          doctype: "BOM",
+          name: frm.doc.custom_bom_no
+        }
+      });
+      if (!r.message) {
+        return;
+      }
+      let bom = r.message;
+      frm.clear_table("custom_raw_materials");
+      for (let bom_item of bom.items || []) {
+        let row = frm.add_child("custom_raw_materials");
+        row.item_code = bom_item.item_code || "";
+        row.item_name = bom_item.item_name || "";
+        row.description = bom_item.description || "";
+        row.qty = bom_item.qty || 0;
+        row.uom = bom_item.uom || "";
+        row.stock_uom = bom_item.stock_uom || "";
+        row.conversion_factor = bom_item.conversion_factor || 1;
+        row.rate = flt(bom_item.rate);
+        row.amount = flt(bom_item.amount);
+      }
+      frm.refresh_field("custom_raw_materials");
+      frm.dirty();
+    } catch (error) {
+      console.error("Error loading BOM items:", error);
+      frappe.msgprint({
+        title: __("Error"),
+        message: __("Unable to load BOM raw materials."),
+        indicator: "red"
+      });
     }
   }
 
@@ -1499,6 +1543,22 @@
         fetch_last_purchase_rate(frm, row.doctype, row.name);
       });
     },
+    refresh: function(frm) {
+      frm.fields_dict.custom_created_by.$wrapper.find(".control-value").css("color", "black");
+    },
+    onload: function(frm) {
+      if (frm.is_new() && !frm.doc.custom_created_by) {
+        frappe.db.get_value(
+          "User",
+          frappe.session.user,
+          "full_name"
+        ).then((r) => {
+          if (r.message) {
+            frm.set_value("custom_created_by", r.message.full_name);
+          }
+        });
+      }
+    },
     before_submit: function(frm) {
       return new Promise((resolve, reject) => {
         frappe.call({
@@ -1545,6 +1605,22 @@
             d.get_primary_btn().hide();
           }
         });
+      });
+    },
+    custom_created_by: function(frm) {
+      if (!frm.doc.custom_created_by) {
+        frm.set_value("custom_concern_person", "");
+        return;
+      }
+      frappe.db.exists("Zsystem Contact Person", frm.doc.custom_created_by).then((exists) => {
+        if (exists) {
+          frm.set_value(
+            "custom_concern_person",
+            frm.doc.custom_created_by
+          );
+        } else {
+          frm.set_value("custom_concern_person", "");
+        }
       });
     }
   });
@@ -2708,7 +2784,6 @@
   });
   function set_sales_order_value(frm) {
     if (!frm.doc.work_order) {
-      frm.set_value("custom_sales_order_no", "");
       return;
     }
     frappe.db.get_value(
@@ -2727,4 +2802,4 @@
     });
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.3K347KOA.js.map
+//# sourceMappingURL=zsystem_customize.bundle.IYYXDUSA.js.map
