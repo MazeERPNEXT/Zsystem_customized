@@ -1,6 +1,6 @@
 import frappe
 from frappe.utils import today
-
+from frappe.utils import flt
 
 @frappe.whitelist()
 def get_purchase_order_data_from_bom(bom, selected_items):
@@ -155,4 +155,70 @@ def bom_set_so_data(doc, method=None):
             "bom_no",
             doc.name,
             update_modified=False
+        )
+
+# if cancel bom the related so against bom is set empty
+@frappe.whitelist()
+def clear_bom_from_sales_order(bom):
+
+    bom_doc = frappe.get_doc("BOM", bom)
+
+    sales_order = bom_doc.custom_sales_order_no
+
+    if not sales_order:
+        frappe.throw("Sales Order No is not set in this BOM.")
+
+    # Find Sales Order Items linked to this BOM
+    so_items = frappe.get_all(
+        "Sales Order Item",
+        filters={
+            "parent": sales_order,
+            "bom_no": bom_doc.name
+        },
+        fields=["name"]
+    )
+
+    if not so_items:
+        frappe.msgprint(
+            f"No Sales Order Item found with BOM {bom_doc.name}."
+        )
+        return
+
+    # Clear bom_no
+    for item in so_items:
+        frappe.db.set_value(
+            "Sales Order Item",
+            item.name,
+            "bom_no",
+            "",
+            update_modified=False
+        )
+
+    # Also clear Sales Order custom BOM field
+    frappe.db.set_value(
+        "Sales Order",
+        sales_order,
+        "custom_bom_no",
+        "",
+        update_modified=False
+    )
+
+    frappe.db.commit()
+
+    return {
+        "sales_order": sales_order,
+        "cleared_items": len(so_items)
+    }
+
+# //validate the estimate and total cost
+def validate_estimate_and_totalcost(doc, method=None):
+    total_amt = flt(doc.total_cost)
+    estimate_amt = flt(doc.custom_estimate_cost)
+
+    if total_amt > estimate_amt:
+        frappe.throw(
+            "Cannot submit BOM. Total Cost ({0}) is greater than Estimate Cost ({1}).".format(
+                total_amt,
+                estimate_amt
+            )
         )

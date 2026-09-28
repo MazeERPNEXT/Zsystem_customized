@@ -193,4 +193,3 @@ def validate_contact_no(doc,method=None):
     mobile_no = doc.custom_contact_no
     if not mobile_no or not mobile_no.strip().isdigit() or len(mobile_no.strip()) != 10:
         frappe.throw(("Please enter a valid 10-digit contact person number."),title=("Invalid contact person Number"))
-    

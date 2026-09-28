@@ -2504,6 +2504,20 @@
         }
       });
     },
+    before_submit: function(frm) {
+      const estimate = flt(frm.doc.custom_estimate_cost);
+      const totalcost = flt(frm.doc.custom_total_cost);
+      console.log("Estimate Cost:", estimate);
+      console.log("Total Cost:", totalcost);
+      if (totalcost > estimate) {
+        frappe.throw(
+          __("Your Total Cost ({0}) is greater than the Estimate Cost ({1}).", [
+            totalcost,
+            estimate
+          ])
+        );
+      }
+    },
     refresh: function(frm) {
       frm.remove_custom_button(
         __("Purchase Order"),
@@ -2596,6 +2610,39 @@
           }, 100);
         }
       );
+      if (frm.doc.docstatus == 1 && frm.doc.custom_sales_order_no) {
+        frm.add_custom_button(
+          __("Clear BOM from Sales Order"),
+          function() {
+            frappe.confirm(
+              __("Clear BOM {0} from the Sales Order Item?", [
+                frm.doc.name
+              ]),
+              function() {
+                frappe.call({
+                  method: "zsystem_customize.bom.clear_bom_from_sales_order",
+                  args: {
+                    bom: frm.doc.name
+                  },
+                  freeze: true,
+                  freeze_message: __("Clearing BOM from Sales Order..."),
+                  callback: function(r) {
+                    if (r.message) {
+                      frappe.msgprint(
+                        __("BOM reference cleared from {0} Sales Order Item(s).", [
+                          r.message.cleared_items
+                        ])
+                      );
+                      frm.reload_doc();
+                    }
+                  }
+                });
+              }
+            );
+          },
+          __("Actions")
+        );
+      }
     }
   });
   function hide_purchase_order_button(frm) {
@@ -2802,4 +2849,4 @@
     });
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.IYYXDUSA.js.map
+//# sourceMappingURL=zsystem_customize.bundle.UZWAZGVX.js.map

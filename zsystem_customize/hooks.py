@@ -186,7 +186,8 @@ doc_events = {
         "validate":"zsystem_customize.supplier.validate_supplier"
     },
     "BOM": {
-        "on_submit": "zsystem_customize.bom.bom_set_so_data"
+        "on_submit": "zsystem_customize.bom.bom_set_so_data",
+        "before_submit": "zsystem_customize.bom.validate_estimate_and_totalcost"
     },
     "Stock Entry": {
         "on_update": "zsystem_customize.stock_entry.sent_email_for_panelteam"
