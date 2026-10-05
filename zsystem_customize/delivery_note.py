@@ -1,5 +1,79 @@
 import frappe
+import json
+from frappe import _
+from erpnext.stock.doctype.delivery_note.delivery_note import make_sales_invoice as original_make_sales_invoice
 
+@frappe.whitelist()
+def make_sales_invoice(source_name, target_doc=None, args=None):
+    # Handle args safely
+    if args is None:
+        args = {}
+    if isinstance(args, str):
+        args = json.loads(args)
+
+    # Call original ERPNext method
+    doc = original_make_sales_invoice(source_name, target_doc, args)
+
+    # Loop through Sales Invoice Items
+    for item in doc.items:
+        if not item.dn_detail:
+            continue
+
+        serial_numbers = []
+
+        try:
+            # Get Delivery Note Item
+            dn_item = frappe.get_doc("Delivery Note Item", item.dn_detail)
+
+            # -----------------------------
+            # Case 1: Direct Serial No
+            # -----------------------------
+            if dn_item.serial_no:
+                raw_serials = dn_item.serial_no.strip()
+
+                # Convert comma OR newline → list
+                if "," in raw_serials:
+                    serial_numbers.extend([
+                        s.strip() for s in raw_serials.split(",") if s.strip()
+                    ])
+                else:
+                    serial_numbers.extend([
+                        s.strip() for s in raw_serials.split("\n") if s.strip()
+                    ])
+
+            # -----------------------------
+            # Case 2: Serial & Batch Bundle
+            # -----------------------------
+            elif dn_item.serial_and_batch_bundle:
+                bundle = frappe.get_doc(
+                    "Serial and Batch Bundle",
+                    dn_item.serial_and_batch_bundle
+                )
+
+                serial_numbers.extend([
+                    entry.serial_no.strip()
+                    for entry in bundle.entries
+                    if entry.serial_no
+                ])
+
+        except Exception:
+            frappe.log_error(
+                frappe.get_traceback(),
+                "Serial Number Fetch Error"
+            )
+
+        # -----------------------------
+        # Remove duplicates (important)
+        # -----------------------------
+        serial_numbers = list(dict.fromkeys(serial_numbers))
+
+        # -----------------------------
+        # Final formatting (line-by-line)
+        # -----------------------------
+        if serial_numbers:
+            item.custom_item_serial_no = "\n".join(serial_numbers)
+
+    return doc
 
 # ==========================================================
 # UPDATE SALES ORDER TOTAL DC QTY & AMOUNT

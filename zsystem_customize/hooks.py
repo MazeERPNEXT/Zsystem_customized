@@ -247,9 +247,10 @@ scheduler_events = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "zsystem_customize.event.get_events"
-# }
+override_whitelisted_methods = {
+	"erpnext.stock.doctype.delivery_note.delivery_note.make_sales_invoice":
+        "zsystem_customize.delivery_note.make_sales_invoice",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
