@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils import flt
 import json
 from frappe import _
 from erpnext.stock.doctype.delivery_note.delivery_note import make_sales_invoice as original_make_sales_invoice
@@ -192,3 +193,20 @@ def update_sales_order_from_delivery_note(doc, method=None):
 def delivery_note_events(doc, method=None):
     update_sales_order_delivery_qty(doc, method)
     update_sales_order_from_delivery_note(doc, method)
+
+#validate based on qty befor save in item
+def validate_item_before_save(doc, method=None):
+    for idx, item in enumerate(doc.items, start=1):
+        item_code = item.item_code
+        dc_qty = flt(item.qty)
+
+        stock_qty = flt(
+            frappe.db.get_value(
+                "Item",
+                item_code,
+                "custom_stock_qty"
+            )
+        )
+
+        if dc_qty > stock_qty:
+            frappe.throw(_("Row {0}: Stock qty ({1}) is less than DC qty ({2}) for Item {3}").format(idx,stock_qty,dc_qty,item_code))

@@ -40,7 +40,8 @@ doctype_list_js = {
     "Sales Order":"public/js/sales_order_list.js",
     "Item": "public/js/item_list.js",
     "Purchase Order": "public/js/purchase_order_list.js",
-    "Purchase Invoice": "public/js/purchase_invoice_list.js"
+    "Purchase Invoice": "public/js/purchase_invoice_list.js",
+    "Purchase Receipt": "public/js/purchase_receipt_list.js"
     }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -125,7 +126,7 @@ doctype_list_js = {
 # DocType Class
 # ---------------
 # Override standard doctype classes
-
+import zsystem_customize.serial_and_batch_bundle
 override_doctype_class = {
 	# "ToDo": "custom_app.overrides.CustomToDo"
     "Subcontracting Receipt": "zsystem_customize.update_stock_in_item_doctype.CustomSubcontractingReceipt",
@@ -153,6 +154,7 @@ doc_events = {
         "on_submit": "zsystem_customize.delivery_note.delivery_note_events",
         "on_cancel": "zsystem_customize.delivery_note.delivery_note_events",
         "on_update_after_submit": "zsystem_customize.delivery_note.delivery_note_events",
+        "before_save":"zsystem_customize.delivery_note.validate_item_before_save"
     },
     "Sales Order": {
         "before_save": "zsystem_customize.sales_order.update_sales_order_balance_qty",
