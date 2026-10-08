@@ -197,16 +197,29 @@ def delivery_note_events(doc, method=None):
 #validate based on qty befor save in item
 def validate_item_before_save(doc, method=None):
     for idx, item in enumerate(doc.items, start=1):
-        item_code = item.item_code
-        dc_qty = flt(item.qty)
 
-        stock_qty = flt(
-            frappe.db.get_value(
-                "Item",
-                item_code,
-                "custom_stock_qty"
-            )
+        # Skip empty item rows
+        if not item.item_code:
+            continue
+
+        # Get Item details
+        item_data = frappe.db.get_value(
+            "Item",
+            item.item_code,
+            ["is_stock_item", "custom_stock_qty"],
+            as_dict=True
         )
 
+        if not item_data:
+            continue
+
+        # Validate only Stock Items
+        if item_data.is_stock_item != 1:
+            continue
+
+        dc_qty = flt(item.qty)
+        stock_qty = flt(item_data.custom_stock_qty)
+
+        # Validate quantity
         if dc_qty > stock_qty:
-            frappe.throw(_("Row {0}: Stock qty ({1}) is less than DC qty ({2}) for Item {3}").format(idx,stock_qty,dc_qty,item_code))
+            frappe.throw(_("Row {0}: Stock qty ({1}) is less than DC qty ({2}) for Item {3}").format(idx,stock_qty,dc_qty,item.item_code))

@@ -197,7 +197,10 @@ doc_events = {
     },
     "Zsystem Contact Person":{
         "validate":"zsystem_customize.zsystem_customize.doctype.zsystem_contact_person.zsystem_contact_person.validate_contact_no"
-    }
+    },
+    "Quotation":{
+        "validate": "zsystem_customize.quotation.set_valid_till_date",
+    },
     # "Work Order": {
     #     "before_insert":"zsystem_customize.bom.set_sales_order_in_work_order"
     # }

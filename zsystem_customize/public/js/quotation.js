@@ -12,13 +12,21 @@ frappe.ui.form.on("Quotation", {
     onload(frm) {
         if (!frm.doc.__islocal) return;
 
-        set_sales_person_by_user(frm);
+        // set_sales_person_by_user(frm);
         set_fiscal_year_prefix(frm);
         //auto set session user as created by
         if(frm.is_new() && !frm.doc.custom_created_by){
             frappe.db.set_value("User",frappe.session.user,"full_name").then(r =>{
                 frm.set_value("custom_created_by",r.message.full_name);
             })
+        }
+    },
+    custom_valid_days(frm){
+        let validate_value = frm.doc.custom_valid_days;
+        if(validate_value && !/^\d+$/.test(validate_value)){
+            frappe.msgprint(__("Valid Days allow number only"))
+            frm.set_value("custom_valid_days","");
+
         }
     },
 
@@ -134,27 +142,27 @@ frappe.ui.form.on("Quotation", {
 // ==================================================
 // 1️⃣ Auto-set Sales Person based on user
 // ==================================================
-function set_sales_person_by_user(frm) {
-    if (!frm.doc.__islocal) return;
+// function set_sales_person_by_user(frm) {
+//     if (!frm.doc.__islocal) return;
 
-    const user_map = {
-        "Rajarajan": "Rajarajan",
-        "Rajarajan.M": "Rajarajan",
-        "chandru": "Chandru",
-        "Chandru.R": "Chandru",
-        "Ramesh.P": "Ramesh"
-    };
+//     const user_map = {
+//         "Rajarajan": "Rajarajan",
+//         "Rajarajan.M": "Rajarajan",
+//         "chandru": "Chandru",
+//         "Chandru.R": "Chandru",
+//         "Ramesh.P": "Ramesh"
+//     };
 
-    const sp = user_map[frappe.session.user_fullname];
-    if (!sp) return;
+//     const sp = user_map[frappe.session.user_fullname];
+//     if (!sp) return;
 
-    const options = frm.fields_dict.custom_sales_person.df.options || "";
-    if (options.includes(sp)) {
-        frm.set_value("custom_sales_person", sp);
-    } else {
-        frappe.msgprint(`⚠️ '${sp}' not available in Sales Person options`);
-    }
-}
+//     const options = frm.fields_dict.custom_sales_person.df.options || "";
+//     if (options.includes(sp)) {
+//         frm.set_value("custom_sales_person", sp);
+//     } else {
+//         frappe.msgprint(`⚠️ '${sp}' not available in Sales Person options`);
+//     }
+// }
 
 
 // ==================================================

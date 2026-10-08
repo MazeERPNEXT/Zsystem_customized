@@ -1,4 +1,9 @@
 import frappe
+from frappe.utils import add_days
+
+def set_valid_till_date(doc,method=None):
+    if doc.transaction_date and doc.custom_valid_days:
+        doc.valid_till = add_days(doc.transaction_date,int(doc.custom_valid_days))
 
 @frappe.whitelist()
 def get_customer_contact_address(customer):
