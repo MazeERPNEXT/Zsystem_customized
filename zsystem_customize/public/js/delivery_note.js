@@ -9,6 +9,9 @@ frappe.ui.form.on("Delivery Note Item",{
             // frappe.model.set_value(cdt, cdn, 'base_price_list_rate', 0);
         },1000);
         set_filter_serialno_based_item(frm);
+    },
+    serial_no: function(frm, cdt, cdn) {
+        update_qty(cdt, cdn);
     }
 })
 frappe.ui.form.on("Delivery Note", {
@@ -78,6 +81,13 @@ frappe.ui.form.on("Delivery Note", {
             );
 
         }
+    },
+    validate: function(frm) {
+        frm.doc.items.forEach(row => {
+            if (row.serial_no && row.serial_no.trim() !== "") {
+                update_qty(row.doctype, row.name);
+            }
+        });
     },
     //set value based on bom items
     onload: function (frm) {
@@ -247,5 +257,19 @@ async function set_value_based_on_bom_item(frm) {
             message: __("Unable to load BOM raw materials."),
             indicator: "red"
         });
+    }
+}
+
+//based on Serial no qty update
+function update_qty(cdt, cdn) {
+    let row = locals[cdt][cdn];
+
+    if (row.serial_no && row.serial_no.trim() !== "") {
+        let serial_count = row.serial_no
+            .split("\n")
+            .map(s => s.trim())
+            .filter(s => s !== "").length;
+
+        frappe.model.set_value(cdt, cdn, "qty", serial_count);
     }
 }

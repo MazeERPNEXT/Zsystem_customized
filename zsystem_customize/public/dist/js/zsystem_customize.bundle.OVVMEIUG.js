@@ -1264,6 +1264,9 @@
         frappe.model.set_value(cdt, cdn, "rate", 0);
       }, 1e3);
       set_filter_serialno_based_item(frm);
+    },
+    serial_no: function(frm, cdt, cdn) {
+      update_qty(cdt, cdn);
     }
   });
   frappe.ui.form.on("Delivery Note", {
@@ -1295,6 +1298,13 @@
           "orange"
         );
       }
+    },
+    validate: function(frm) {
+      frm.doc.items.forEach((row) => {
+        if (row.serial_no && row.serial_no.trim() !== "") {
+          update_qty(row.doctype, row.name);
+        }
+      });
     },
     onload: function(frm) {
       if (frm.doc.custom_bom_no && (!frm.doc.custom_raw_materials || frm.doc.custom_raw_materials.length === 0)) {
@@ -1420,6 +1430,13 @@
         message: __("Unable to load BOM raw materials."),
         indicator: "red"
       });
+    }
+  }
+  function update_qty(cdt, cdn) {
+    let row = locals[cdt][cdn];
+    if (row.serial_no && row.serial_no.trim() !== "") {
+      let serial_count = row.serial_no.split("\n").map((s) => s.trim()).filter((s) => s !== "").length;
+      frappe.model.set_value(cdt, cdn, "qty", serial_count);
     }
   }
 
@@ -2835,4 +2852,4 @@
     });
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.EJOLR45E.js.map
+//# sourceMappingURL=zsystem_customize.bundle.OVVMEIUG.js.map
