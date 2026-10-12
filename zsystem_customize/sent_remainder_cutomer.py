@@ -97,14 +97,32 @@ def send_docket_email(doc,method=None):
         Z System Intelligent Controls Pvt. Ltd.
     </p>
     """
+    invoice_pdf = frappe.get_print(
+        doc.doctype,
+        doc.name,
+        print_format="MSPL Sales Invoice",
+        as_pdf=True
+    )
     frappe.sendmail(
         recipients=[customer.custom_receiver_email_id], 
+        cc=["Vignesh@mazeworkssolutions.com"],
         subject = subject,
         message = message,
         reference_doctype = doc.doctype,
         reference_name = doc.name,
+        attachments=[
+            {
+                "fname": f"{doc.name}.pdf",
+                "fcontent": invoice_pdf
+            }
+        ]
     )
     doc.db_set("custom_docket_email_sent", 1, update_modified=False)
+    frappe.msgprint(
+        f"Docket email sent successfully to {customer.custom_receiver_email_id}",
+        title="Email Sent",
+        indicator="green"
+    )
 
 
 # Send remainder mail for 3days before and on the days

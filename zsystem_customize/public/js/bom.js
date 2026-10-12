@@ -370,6 +370,9 @@ function create_purchase_order(frm, selected_rows) {
                         po_item.warehouse =
                             item.warehouse;
 
+                        po_item.sales_order =
+                            data.custom_sales_order_no;;
+
                         po_item.schedule_date =
                             item.schedule_date;
 

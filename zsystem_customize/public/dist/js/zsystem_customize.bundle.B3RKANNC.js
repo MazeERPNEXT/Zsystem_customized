@@ -1267,6 +1267,9 @@
     },
     serial_no: function(frm, cdt, cdn) {
       update_qty(cdt, cdn);
+    },
+    items_add: function(frm, cdt, cdn) {
+      update_qty(cdt, cdn);
     }
   });
   frappe.ui.form.on("Delivery Note", {
@@ -1436,7 +1439,9 @@
     let row = locals[cdt][cdn];
     if (row.serial_no && row.serial_no.trim() !== "") {
       let serial_count = row.serial_no.split("\n").map((s) => s.trim()).filter((s) => s !== "").length;
-      frappe.model.set_value(cdt, cdn, "qty", serial_count);
+      let frm = cur_frm;
+      let qty = frm.doc.is_return ? -serial_count : serial_count;
+      frappe.model.set_value(cdt, cdn, "qty", qty);
     }
   }
 
@@ -2707,6 +2712,8 @@
               po_item.conversion_factor = item.conversion_factor;
               po_item.rate = item.rate;
               po_item.warehouse = item.warehouse;
+              po_item.sales_order = data.custom_sales_order_no;
+              ;
               po_item.schedule_date = item.schedule_date;
               po_item.bom = item.bom;
             });
@@ -2852,4 +2859,4 @@
     });
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.OVVMEIUG.js.map
+//# sourceMappingURL=zsystem_customize.bundle.B3RKANNC.js.map

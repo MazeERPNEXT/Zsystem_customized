@@ -12,6 +12,9 @@ frappe.ui.form.on("Delivery Note Item",{
     },
     serial_no: function(frm, cdt, cdn) {
         update_qty(cdt, cdn);
+    },
+    items_add: function(frm, cdt, cdn) {
+        update_qty(cdt, cdn);
     }
 })
 frappe.ui.form.on("Delivery Note", {
@@ -270,6 +273,9 @@ function update_qty(cdt, cdn) {
             .map(s => s.trim())
             .filter(s => s !== "").length;
 
-        frappe.model.set_value(cdt, cdn, "qty", serial_count);
+        let frm = cur_frm;
+        let qty = frm.doc.is_return ? -serial_count : serial_count;
+
+        frappe.model.set_value(cdt, cdn, "qty", qty);
     }
 }

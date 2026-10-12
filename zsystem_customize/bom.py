@@ -31,6 +31,7 @@ def get_purchase_order_data_from_bom(bom, selected_items):
             "conversion_factor": row.conversion_factor or 1,
             "rate": row.rate or 0,
             "warehouse": row.source_warehouse,
+            "sales_order": bom_doc.get("custom_sales_order_no"),
             "schedule_date": (
                 getattr(row, "schedule_date", None)
                 or today()

@@ -174,7 +174,7 @@ doc_events = {
     },
     "Sales Invoice" : {
         "validate": "zsystem_customize.sales_invoice.set_due_date",
-        "on_submit": "zsystem_customize.sent_remainder_cutomer.send_docket_email",
+        "on_update_after_submit": "zsystem_customize.sent_remainder_cutomer.send_docket_email",
     },
    "Purchase Invoice" :{
         "validate":"zsystem_customize.purchase_invoice.set_due_date",
