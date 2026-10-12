@@ -15,10 +15,34 @@ frappe.ui.form.on("Purchase Receipt Item",{
 
 frappe.ui.form.on("Purchase Receipt", {
     before_submit(frm) {
-        if (frm.doc.custom_is_hsn_code_verified != 1) {
-            frappe.msgprint(__("Kindly verify HSN Code in Item Table"));
-            frappe.validated = false; 
+        let missing_hsn = [];
+
+        (frm.doc.items || []).forEach((row, index) => {
+            if (!row.gst_hsn_code || !row.gst_hsn_code.trim()) {
+                missing_hsn.push(
+                    `Row ${index + 1}: ${row.item_code || "Unknown Item"}`
+                );
+            }
+        });
+
+        if (missing_hsn.length > 0) {
+            frm.set_value("custom_is_hsn_code_verified", 0);
+
+            frappe.msgprint({
+                title: __("Missing HSN Code"),
+                indicator: "red",
+                message: __(
+                    "Please fill in the GST HSN Code for the following items:<br><br>{0}",
+                    [missing_hsn.join("<br>")]
+                )
+            });
+
+            frappe.validated = false;
+            return;
         }
+
+        // All item rows have an HSN code
+        frm.set_value("custom_is_hsn_code_verified", 1);
     }
 });
 

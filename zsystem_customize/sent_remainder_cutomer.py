@@ -97,10 +97,15 @@ def send_docket_email(doc,method=None):
         Z System Intelligent Controls Pvt. Ltd.
     </p>
     """
-    invoice_pdf = frappe.get_print(
-        doc.doctype,
-        doc.name,
-        print_format="MSPL Sales Invoice",
+    if not dn:
+        frappe.msgprint("Delivery Note not found for this Sales Invoice.")
+        return
+    delivery_note = dn[0].delivery_note
+    
+    dc_pdf = frappe.get_print(
+        "Delivery Note",
+        delivery_note,
+        print_format="Delivery Challan",  # Use your exact print format name
         as_pdf=True
     )
     frappe.sendmail(
@@ -112,8 +117,8 @@ def send_docket_email(doc,method=None):
         reference_name = doc.name,
         attachments=[
             {
-                "fname": f"{doc.name}.pdf",
-                "fcontent": invoice_pdf
+                "fname": f"{delivery_note}.pdf",
+                "fcontent": dc_pdf
             }
         ]
     )
