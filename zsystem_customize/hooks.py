@@ -203,6 +203,9 @@ doc_events = {
     "Quotation":{
         "validate": "zsystem_customize.quotation.set_valid_till_date",
     },
+    "Material Request":{
+        "on_update":"zsystem_customize.bom.update_bom_material_request_no",
+    }
     # "Work Order": {
     #     "before_insert":"zsystem_customize.bom.set_sales_order_in_work_order"
     # }

@@ -158,6 +158,7 @@ def get_material_request_data_from_bom(bom, selected_items):
         )
 
         items.append({
+            "bom_item_row": row.name,
             "item_code": row.item_code,
             "item_name": row.item_name,
             "description": row.description,
@@ -188,6 +189,47 @@ def get_material_request_data_from_bom(bom, selected_items):
         "items": items
     }
 
+# //update material request no in bom
+def update_bom_material_request_no(doc, method=None):
+    """Update only the selected BOM Item rows with the material request number."""
+
+    for row in doc.items:
+        bom_name = doc.custom_bom_no
+        bom_item_row = row.get("custom_bom_item_row")
+
+        if not bom_name or not bom_item_row:
+            continue
+
+        bom_item = frappe.db.get_value(
+            "BOM Item",
+            bom_item_row,
+            ["name", "parent"],
+            as_dict=True,
+        )
+
+        if not bom_item:
+            frappe.log_error(
+                f"BOM Item row {bom_item_row} does not exist. "
+                f"Material Request: {doc.name}",
+                "BOM Material Request Update",
+            )
+            continue
+
+        if bom_item.parent != bom_name:
+            frappe.log_error(
+                f"BOM Item row {bom_item_row} belongs to "
+                f"{bom_item.parent}, not {bom_name}.",
+                "BOM Material Request Update",
+            )
+            continue
+
+        frappe.db.set_value(
+            "BOM Item",
+            bom_item_row,
+            "custom_material_request_no",
+            doc.name,
+            update_modified=False,
+        )
 # //after submit based on Sales Order No set the bom id
 def bom_set_so_data(doc, method=None):
     if doc.docstatus != 1:

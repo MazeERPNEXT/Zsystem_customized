@@ -2666,6 +2666,55 @@
           __("Actions")
         );
       }
+      const grid = frm.fields_dict.items.grid;
+      if (grid.__delete_po_confirmation) {
+        return;
+      }
+      grid.__delete_po_confirmation = true;
+      const $wrapper = $(grid.wrapper);
+      $wrapper.on(
+        "click.bom_po_delete",
+        ".es-button__label",
+        function(e) {
+          if ($(this).text().trim() !== "Delete row") {
+            return;
+          }
+          const selected_rows = grid.get_selected_children();
+          if (!selected_rows || !selected_rows.length) {
+            return;
+          }
+          const linked_rows = selected_rows.filter(
+            (row) => row.custom_purchase_order_no
+          );
+          if (!linked_rows.length) {
+            return;
+          }
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          const po_numbers = [
+            ...new Set(
+              linked_rows.map(
+                (row) => row.custom_purchase_order_no
+              )
+            )
+          ];
+          frappe.confirm(
+            __(
+              "Are you sure you want to delete the selected row(s)? They are linked to Purchase Order(s): {0}",
+              [po_numbers.join(", ")]
+            ),
+            function() {
+              linked_rows.forEach((row) => {
+                var _a;
+                (_a = grid.grid_rows_by_docname[row.name]) == null ? void 0 : _a.remove();
+              });
+              frm.dirty();
+            },
+            function() {
+            }
+          );
+        }
+      );
     }
   });
   function hide_purchase_order_button(frm) {
@@ -2783,6 +2832,7 @@
               mr_item.from_warehouse = item.from_warehouse;
               mr_item.schedule_date = item.schedule_date;
               mr_item.bom = item.bom;
+              mr_item.custom_bom_item_row = item.bom_item_row;
             });
             frappe.set_route(
               "Form",
@@ -2857,4 +2907,4 @@
     });
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.NM227SWK.js.map
+//# sourceMappingURL=zsystem_customize.bundle.JHYOZO4C.js.map
