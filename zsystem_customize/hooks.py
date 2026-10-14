@@ -165,8 +165,9 @@ doc_events = {
     },
     "Purchase Order": {
         "validate": ["zsystem_customize.purchase_order.validate_so_rate","zsystem_customize.purchase_order.validate_contact_no"],
-        "on_submit": "zsystem_customize.purchase_order.update_so_material_status",
+        "on_submit": ["zsystem_customize.purchase_order.update_so_material_status"],
         "on_cancel": "zsystem_customize.purchase_order.update_so_material_status",
+        "on_update":"zsystem_customize.bom.update_bom_purchase_order_no",
     },
     "Purchase Receipt": {
         "on_submit": "zsystem_customize.purchase_order.update_so_material_status_on_receipt",
@@ -190,7 +191,8 @@ doc_events = {
     },
     "BOM": {
         "on_submit": "zsystem_customize.bom.bom_set_so_data",
-        "before_submit": "zsystem_customize.bom.validate_estimate_and_totalcost"
+        "before_submit": "zsystem_customize.bom.validate_estimate_and_totalcost",
+        "before_save": "zsystem_customize.bom.cancel_po_when_bom_item_deleted",
     },
     "Stock Entry": {
         "on_update": "zsystem_customize.stock_entry.sent_email_for_panelteam"

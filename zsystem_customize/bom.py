@@ -2,26 +2,25 @@ import frappe
 from frappe.utils import today
 from frappe.utils import flt
 
+# create po against bom
 @frappe.whitelist()
 def get_purchase_order_data_from_bom(bom, selected_items):
-
-    selected_items = frappe.parse_json(selected_items)
+    selected_items = frappe.parse_json(selected_items) or []
 
     if not selected_items:
-        frappe.throw("Please select at least one item.")
+        frappe.throw("Please select at least one BOM item.")
 
-    # Get BOM
     bom_doc = frappe.get_doc("BOM", bom)
-
     items = []
 
     for row in bom_doc.items:
-
-        # Only selected BOM rows
         if row.name not in selected_items:
             continue
 
         items.append({
+            # Actual BOM Item child row ID
+            "bom_item_row": row.name,
+
             "item_code": row.item_code,
             "item_name": row.item_name,
             "description": row.description,
@@ -31,24 +30,104 @@ def get_purchase_order_data_from_bom(bom, selected_items):
             "conversion_factor": row.conversion_factor or 1,
             "rate": row.rate or 0,
             "warehouse": row.source_warehouse,
-            "sales_order": bom_doc.get("custom_sales_order_no"),
-            "schedule_date": (
-                getattr(row, "schedule_date", None)
-                or today()
-            ),
-            "bom": bom_doc.name
+            "sales_order": bom_doc.custom_sales_order_no,
+            "schedule_date": getattr(row, "schedule_date", None) or today(),
+            "bom": bom_doc.name,
         })
 
     if not items:
-        frappe.throw("No selected items found.")
+        frappe.throw("No selected BOM items found.")
 
     return {
         "company": bom_doc.company,
-        "custom_sales_order_no":bom_doc.custom_sales_order_no,
-        "items": items
+        "custom_sales_order_no": bom_doc.custom_sales_order_no,
+        "items": items,
     }
 
+# update value bom po field based on po created
+def update_bom_purchase_order_no(doc, method=None):
+    """Update only the selected BOM Item rows with the Purchase Order number."""
 
+    for row in doc.items:
+        bom_name = row.get("custom_bom_no") or row.get("bom")
+        bom_item_row = row.get("custom_bom_item_row")
+
+        if not bom_name or not bom_item_row:
+            continue
+
+        bom_item = frappe.db.get_value(
+            "BOM Item",
+            bom_item_row,
+            ["name", "parent"],
+            as_dict=True,
+        )
+
+        if not bom_item:
+            frappe.log_error(
+                f"BOM Item row {bom_item_row} does not exist. "
+                f"Purchase Order: {doc.name}",
+                "BOM Purchase Order Update",
+            )
+            continue
+
+        if bom_item.parent != bom_name:
+            frappe.log_error(
+                f"BOM Item row {bom_item_row} belongs to "
+                f"{bom_item.parent}, not {bom_name}.",
+                "BOM Purchase Order Update",
+            )
+            continue
+
+        frappe.db.set_value(
+            "BOM Item",
+            bom_item_row,
+            "custom_purchase_order_no",
+            doc.name,
+            update_modified=False,
+        )
+
+# if delete row in bom that row releted po is cancelled
+def cancel_po_when_bom_item_deleted(doc, method=None):
+    """Cancel linked draft Purchase Orders when BOM rows are deleted."""
+
+    if doc.is_new():
+        return
+
+    old_bom = frappe.get_doc("BOM", doc.name)
+
+    current_row_names = {
+        row.name for row in doc.items if row.name
+    }
+
+    for old_row in old_bom.items:
+        if old_row.name in current_row_names:
+            continue
+
+        po_name = old_row.custom_purchase_order_no
+
+        if not po_name:
+            continue
+
+        if not frappe.db.exists("Purchase Order", po_name):
+            continue
+
+        po = frappe.get_doc("Purchase Order", po_name)
+
+        # Cancel only draft POs or submitted POs that ERPNext permits
+        # to cancel. A draft PO can simply be deleted.
+        if po.docstatus == 0:
+            frappe.delete_doc("Purchase Order", po_name)
+        elif po.docstatus == 1:
+            po.cancel()
+
+        # Clear the reference on the deleted BOM row if it still exists
+        frappe.db.set_value(
+            "BOM Item",
+            old_row.name,
+            "custom_purchase_order_no",
+            None,
+            update_modified=False,
+        )
 
 # //create material request based on bom data
 

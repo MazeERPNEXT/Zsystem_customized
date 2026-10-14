@@ -45,6 +45,23 @@ frappe.ui.form.on("BOM", {
             );
         }
     },
+    after_save: async function(frm) {
+        for (let row of frm.doc.items || []) {
+            if (row.item_code) {
+                let r = await frappe.db.get_value(
+                    "Item",
+                    row.item_code,
+                    "custom_stock_qty"
+                );
+
+                if (r && r.message) {
+                    row.custom_item_stock_qty = r.message.custom_stock_qty || 0;
+                }
+            }
+        }
+
+        frm.refresh_field("items");
+    },
     refresh: function(frm) {
 
         // Remove existing Purchase Order button
@@ -270,139 +287,69 @@ function hide_material_request_button(frm) {
 }
 
 /* Create Purchase Order from selected BOM rows */
+
 function create_purchase_order(frm, selected_rows) {
-
-    // BOM must be saved
     if (frm.is_new()) {
-
-        frappe.msgprint(
-            __("Please save the BOM first.")
-        );
-
+        frappe.msgprint(__("Please save the BOM first."));
         return;
     }
 
-    // Get selected BOM row names
-    let selected_items = selected_rows.map(function(row) {
-        return row.name;
-    });
+    if (!selected_rows || !selected_rows.length) {
+        frappe.msgprint(__("Please select at least one BOM item."));
+        return;
+    }
 
-    console.log("Selected BOM Items:", selected_items);
+    const selected_items = selected_rows.map(row => row.name);
 
     frappe.call({
-
-        method:
-            "zsystem_customize.bom.get_purchase_order_data_from_bom",
-
+        method: "zsystem_customize.bom.get_purchase_order_data_from_bom",
         args: {
             bom: frm.doc.name,
             selected_items: JSON.stringify(selected_items)
         },
-
         freeze: true,
-
-        freeze_message:
-            __("Fetching selected BOM items..."),
+        freeze_message: __("Fetching selected BOM items..."),
 
         callback: function(r) {
+            if (!r.message) return;
 
-            if (!r.message) {
-                return;
-            }
+            const data = r.message;
 
-            let data = r.message;
+            frappe.model.with_doctype("Purchase Order", function() {
+                const po = frappe.model.get_new_doc("Purchase Order");
 
-            /*
-             * Create a NEW Purchase Order
-             * Nothing is saved automatically.
-             */
-            frappe.model.with_doctype(
-                "Purchase Order",
-                function() {
+                po.company = data.company;
+                po.custom_sales_order_no = data.custom_sales_order_no;
 
-                    let po = frappe.model.get_new_doc(
-                        "Purchase Order"
+                data.items.forEach(function(item) {
+                    const po_item = frappe.model.add_child(
+                        po,
+                        "Purchase Order Item",
+                        "items"
                     );
 
-                    /*
-                     * Set only the fields coming
-                     * from BOM.
-                     */
-                    po.company = data.company;
-                    po.custom_sales_order_no = data.custom_sales_order_no;
+                    po_item.custom_bom_item_row = item.bom_item_row;
+                    po_item.item_code = item.item_code;
+                    po_item.item_name = item.item_name;
+                    po_item.description = item.description;
+                    po_item.qty = item.qty;
+                    po_item.uom = item.uom;
+                    po_item.stock_uom = item.stock_uom;
+                    po_item.conversion_factor = item.conversion_factor;
+                    po_item.rate = item.rate;
+                    po_item.warehouse = item.warehouse;
+                    po_item.sales_order = item.sales_order;
+                    po_item.schedule_date = item.schedule_date;
+                    po_item.custom_bom_no = frm.doc.name;
+                });
 
-                    /*
-                     * Add selected BOM items
-                     */
-                    data.items.forEach(function(item) {
-
-                        let po_item =
-                            frappe.model.add_child(
-                                po,
-                                "Purchase Order Item",
-                                "items"
-                            );
-
-                        po_item.item_code =
-                            item.item_code;
-
-                        po_item.item_name =
-                            item.item_name;
-
-                        po_item.description =
-                            item.description;
-
-                        po_item.qty =
-                            item.qty;
-
-                        po_item.uom =
-                            item.uom;
-
-                        po_item.stock_uom =
-                            item.stock_uom;
-
-                        po_item.conversion_factor =
-                            item.conversion_factor;
-
-                        po_item.rate =
-                            item.rate;
-
-                        po_item.warehouse =
-                            item.warehouse;
-
-                        po_item.sales_order =
-                            data.custom_sales_order_no;;
-
-                        po_item.schedule_date =
-                            item.schedule_date;
-
-                        po_item.bom =
-                            item.bom;
-                    });
-
-                    /*
-                     * Open new Purchase Order
-                     * without saving.
-                     */
-                    frappe.set_route(
-                        "Form",
-                        "Purchase Order",
-                        po.name
-                    );
-                }
-            );
-        },
-
-        error: function(r) {
-
-            console.error(
-                "Failed to fetch BOM items:",
-                r
-            );
-
+                // Open the new Purchase Order without saving it.
+                frappe.set_route("Form", "Purchase Order", po.name);
+            });
         }
     });
 }
+
 //Create material request
 function create_material_request(frm, selected_rows) {
 

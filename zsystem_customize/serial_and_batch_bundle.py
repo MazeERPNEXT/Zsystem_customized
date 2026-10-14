@@ -25,7 +25,14 @@ def validate_returned_serial_batch_no(
 
         if custom_returnable_dc:
             return
-
+    if (
+            self.voucher_type == "Purchase Receipt"
+            and self.voucher_no
+            and frappe.db.get_value(
+                "Purchase Receipt", self.voucher_no, "is_return"
+            )
+        ):
+        return
     return _original_validate_returned_serial_batch_no(
         self,
         return_against,
