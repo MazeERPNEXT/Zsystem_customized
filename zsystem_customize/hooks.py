@@ -192,10 +192,15 @@ doc_events = {
     "BOM": {
         "on_submit": "zsystem_customize.bom.bom_set_so_data",
         "before_submit": "zsystem_customize.bom.validate_estimate_and_totalcost",
-        "before_save": "zsystem_customize.bom.cancel_po_when_bom_item_deleted",
+        "before_save": [
+            "zsystem_customize.bom.cancel_po_when_bom_item_deleted",
+            "zsystem_customize.bom.cancel_mr_when_bom_item_deleted",
+        ]
     },
     "Stock Entry": {
-        "on_update": "zsystem_customize.stock_entry.sent_email_for_panelteam"
+        "on_update": "zsystem_customize.stock_entry.sent_email_for_panelteam",
+        "on_submit":["zsystem_customize.stock_entry.update_material_request_serial_batch","zsystem_customize.material_request.update_bom_serial_batch"],
+        "on_cancel": ["zsystem_customize.stock_entry.clear_material_request_serial_batch_on_cancel"],
     },
     "Zsystem Contact Person":{
         "validate":"zsystem_customize.zsystem_customize.doctype.zsystem_contact_person.zsystem_contact_person.validate_contact_no"
@@ -204,7 +209,8 @@ doc_events = {
         "validate": "zsystem_customize.quotation.set_valid_till_date",
     },
     "Material Request":{
-        "on_update":"zsystem_customize.bom.update_bom_material_request_no",
+        "on_submit":"zsystem_customize.bom.update_bom_material_request_no",
+        # "on_update": "zsystem_customize.material_request.based_on_status_sent_the_serial_or_batchvalue"
     }
     # "Work Order": {
     #     "before_insert":"zsystem_customize.bom.set_sales_order_in_work_order"

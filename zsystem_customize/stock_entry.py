@@ -129,3 +129,106 @@ def sent_email_for_panelteam(doc, method=None):
     frappe.logger().info(
         f"Panel Approval Email Sent - {doc.name} - {recipients}"
     )
+
+def update_material_request_serial_batch(doc, method=None):
+    """Update Material Request Item serial and batch values after Stock Entry submission."""
+
+    if doc.docstatus != 1:
+        return
+
+    for row in doc.items:
+        material_request = row.get("material_request")
+        mr_item_name = row.get("material_request_item")
+
+        if not material_request or not mr_item_name:
+            continue
+
+        serial_nos = row.get("serial_no") or ""
+        batch_nos = row.get("batch_no") or ""
+
+        # ERPNext v16: Get serial and batch details from the bundle
+        bundle_name = row.get("serial_and_batch_bundle")
+
+        if bundle_name:
+            bundle = frappe.get_doc(
+                "Serial and Batch Bundle", bundle_name
+            )
+
+            for entry in bundle.entries:
+                if entry.get("serial_no"):
+                    serial_nos += (
+                        ("\n" if serial_nos else "")
+                        + entry.serial_no
+                    )
+
+                if entry.get("batch_no"):
+                    batch_nos += (
+                        ("\n" if batch_nos else "")
+                        + entry.batch_no
+                    )
+
+        # Remove duplicates
+        serial_nos = "\n".join(
+            dict.fromkeys(
+                value.strip()
+                for value in serial_nos.replace(",", "\n").splitlines()
+                if value.strip()
+            )
+        )
+
+        batch_nos = "\n".join(
+            dict.fromkeys(
+                value.strip()
+                for value in batch_nos.replace(",", "\n").splitlines()
+                if value.strip()
+            )
+        )
+
+        values = {}
+        meta = frappe.get_meta("Material Request Item")
+
+        if meta.has_field("custom_serial_no"):
+            values["custom_serial_no"] = serial_nos
+
+        if meta.has_field("custom_batch_no"):
+            values["custom_batch_no"] = batch_nos
+
+        if values:
+            frappe.db.set_value(
+                "Material Request Item",
+                mr_item_name,
+                values,
+                update_modified=True
+            )
+
+
+def clear_material_request_serial_batch_on_cancel(doc, method=None):
+    """Clear Material Request Item serial and batch values when Stock Entry is cancelled."""
+
+    if doc.docstatus != 2:
+        return
+
+    meta = frappe.get_meta("Material Request Item")
+    fields_to_clear = {}
+
+    if meta.has_field("custom_serial_no"):
+        fields_to_clear["custom_serial_no"] = ""
+
+    if meta.has_field("custom_batch_no"):
+        fields_to_clear["custom_batch_no"] = ""
+
+    if not fields_to_clear:
+        return
+
+    for row in doc.items:
+        mr_item_name = row.get("material_request_item")
+
+        if not row.get("material_request") or not mr_item_name:
+            continue
+
+        frappe.db.set_value(
+            "Material Request Item",
+            mr_item_name,
+            fields_to_clear,
+            update_modified=True
+        )

@@ -2539,7 +2539,6 @@
           }
         }
       }
-      frm.refresh_field("items");
     },
     refresh: function(frm) {
       frm.remove_custom_button(
@@ -2671,49 +2670,52 @@
         return;
       }
       grid.__delete_po_confirmation = true;
-      const $wrapper = $(grid.wrapper);
-      $wrapper.on(
-        "click.bom_po_delete",
-        ".es-button__label",
+      grid.wrapper[0].addEventListener(
+        "click",
         function(e) {
-          if ($(this).text().trim() !== "Delete row") {
+          const button = e.target.closest("button");
+          if (!button)
             return;
-          }
-          const selected_rows = grid.get_selected_children();
-          if (!selected_rows || !selected_rows.length) {
+          const action = button.getAttribute("data-action");
+          const label = (button.textContent || "").trim();
+          const is_delete = action === "delete_rows" || button.classList.contains("grid-remove-rows") || label === "Delete row" || label === "Delete";
+          if (!is_delete)
             return;
-          }
+          const selected_rows = grid.get_selected_children() || [];
+          if (!selected_rows.length)
+            return;
           const linked_rows = selected_rows.filter(
-            (row) => row.custom_purchase_order_no
+            (row) => row.custom_purchase_order_no || row.custom_material_request_no
           );
-          if (!linked_rows.length) {
+          if (!linked_rows.length)
             return;
-          }
           e.preventDefault();
+          e.stopPropagation();
           e.stopImmediatePropagation();
-          const po_numbers = [
-            ...new Set(
-              linked_rows.map(
-                (row) => row.custom_purchase_order_no
-              )
-            )
-          ];
-          frappe.confirm(
-            __(
-              "Are you sure you want to delete the selected row(s)? They are linked to Purchase Order(s): {0}",
-              [po_numbers.join(", ")]
-            ),
-            function() {
-              linked_rows.forEach((row) => {
-                var _a;
-                (_a = grid.grid_rows_by_docname[row.name]) == null ? void 0 : _a.remove();
-              });
-              frm.dirty();
-            },
-            function() {
-            }
-          );
-        }
+          const po_numbers = [...new Set(
+            linked_rows.map((r) => r.custom_purchase_order_no).filter(Boolean)
+          )];
+          const mr_numbers = [...new Set(
+            linked_rows.map((r) => r.custom_material_request_no).filter(Boolean)
+          )];
+          let message = `Are you sure you want to delete ${selected_rows.length} selected row(s)?`;
+          if (po_numbers.length) {
+            message += "<br><br><b>Purchase Order(s):</b> " + frappe.utils.escape_html(po_numbers.join(", "));
+          }
+          if (mr_numbers.length) {
+            message += "<br><br><b>Material Request(s):</b> " + frappe.utils.escape_html(mr_numbers.join(", "));
+          }
+          frappe.confirm(message, function() {
+            selected_rows.forEach((row) => {
+              const grid_row = grid.grid_rows_by_docname[row.name];
+              if (grid_row)
+                grid_row.remove();
+            });
+            frm.dirty();
+            frm.refresh_field("items");
+          });
+        },
+        true
       );
     }
   });
@@ -2831,7 +2833,7 @@
               mr_item.rate = item.rate;
               mr_item.from_warehouse = item.from_warehouse;
               mr_item.schedule_date = item.schedule_date;
-              mr_item.bom = item.bom;
+              mr_item.bom_no = frm.doc.name;
               mr_item.custom_bom_item_row = item.bom_item_row;
             });
             frappe.set_route(
@@ -2907,4 +2909,4 @@
     });
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.JHYOZO4C.js.map
+//# sourceMappingURL=zsystem_customize.bundle.25T6JYBB.js.map

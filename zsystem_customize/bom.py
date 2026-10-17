@@ -88,69 +88,67 @@ def update_bom_purchase_order_no(doc, method=None):
 
 # if delete row in bom that row releted po is cancelled
 def cancel_po_when_bom_item_deleted(doc, method=None):
-    """Cancel linked draft Purchase Orders when BOM rows are deleted."""
+    """Cancel linked Purchase Orders (and their Purchase Invoices) when BOM rows are deleted."""
 
     if doc.is_new():
         return
 
     old_bom = frappe.get_doc("BOM", doc.name)
-
-    current_row_names = {
-        row.name for row in doc.items if row.name
-    }
+    current_row_names = {row.name for row in doc.items if row.name}
 
     for old_row in old_bom.items:
         if old_row.name in current_row_names:
             continue
 
         po_name = old_row.custom_purchase_order_no
-
-        if not po_name:
-            continue
-
-        if not frappe.db.exists("Purchase Order", po_name):
+        if not po_name or not frappe.db.exists("Purchase Order", po_name):
             continue
 
         po = frappe.get_doc("Purchase Order", po_name)
 
-        # Cancel only draft POs or submitted POs that ERPNext permits
-        # to cancel. A draft PO can simply be deleted.
+        if po.docstatus == 2:
+            continue
+
+        # Invoices must go first, otherwise the PO is blocked by the link
+        cancel_linked_purchase_invoices(po_name)
+
+        po.reload()
         if po.docstatus == 0:
             frappe.delete_doc("Purchase Order", po_name)
         elif po.docstatus == 1:
             po.cancel()
 
-        # Clear the reference on the deleted BOM row if it still exists
-        frappe.db.set_value(
-            "BOM Item",
-            old_row.name,
-            "custom_purchase_order_no",
-            None,
-            update_modified=False,
-        )
+
+def cancel_linked_purchase_invoices(po_name):
+    pi_names = frappe.get_all(
+        "Purchase Invoice Item",
+        filters={"purchase_order": po_name, "docstatus": ["<", 2]},
+        pluck="parent",
+    )
+
+    for pi_name in set(pi_names):
+        pi = frappe.get_doc("Purchase Invoice", pi_name)
+
+        if pi.docstatus == 1:
+            pi.cancel()
+        elif pi.docstatus == 0:
+            frappe.delete_doc("Purchase Invoice", pi_name)
 
 # //create material request based on bom data
-
 @frappe.whitelist()
 def get_material_request_data_from_bom(bom, selected_items):
-
-    selected_items = frappe.parse_json(selected_items)
+    selected_items = frappe.parse_json(selected_items) or []
 
     if not selected_items:
-        frappe.throw("Please select at least one item.")
+        frappe.throw("Please select at least one BOM item.")
 
-    # Get BOM
     bom_doc = frappe.get_doc("BOM", bom)
-
     items = []
 
     for row in bom_doc.items:
-
-        # Only selected BOM rows
         if row.name not in selected_items:
             continue
 
-        # Get warehouse from Item Master
         item_warehouse = frappe.db.get_value(
             "Item",
             row.item_code,
@@ -167,16 +165,8 @@ def get_material_request_data_from_bom(bom, selected_items):
             "stock_uom": row.stock_uom,
             "conversion_factor": row.conversion_factor or 1,
             "rate": row.rate or 0,
-
-            # Warehouse from Item Master
             "from_warehouse": item_warehouse,
-
-            "schedule_date": (
-                getattr(row, "schedule_date", None)
-                or today()
-            ),
-
-            "bom": bom_doc.name
+            "schedule_date": today(),
         })
 
     if not items:
@@ -186,18 +176,30 @@ def get_material_request_data_from_bom(bom, selected_items):
         "company": bom_doc.company,
         "custom_sales_order_no": bom_doc.custom_sales_order_no,
         "custom_bom_no": bom_doc.name,
-        "items": items
+        "items": items,
     }
 
-# //update material request no in bom
+
 def update_bom_material_request_no(doc, method=None):
-    """Update only the selected BOM Item rows with the material request number."""
+    """Update only the selected BOM Item rows when an MR is submitted."""
+
+    logger = frappe.logger("zsystem_customize")
+    bom_name = doc.get("custom_bom_no")
+
+    if not bom_name:
+        logger.warning(
+            f"Material Request {doc.name}: custom_bom_no is empty."
+        )
+        return
 
     for row in doc.items:
-        bom_name = doc.custom_bom_no
         bom_item_row = row.get("custom_bom_item_row")
 
-        if not bom_name or not bom_item_row:
+        if not bom_item_row:
+            logger.warning(
+                f"Material Request {doc.name}: "
+                f"custom_bom_item_row is empty for item {row.item_code}."
+            )
             continue
 
         bom_item = frappe.db.get_value(
@@ -207,19 +209,10 @@ def update_bom_material_request_no(doc, method=None):
             as_dict=True,
         )
 
-        if not bom_item:
-            frappe.log_error(
-                f"BOM Item row {bom_item_row} does not exist. "
-                f"Material Request: {doc.name}",
-                "BOM Material Request Update",
-            )
-            continue
-
-        if bom_item.parent != bom_name:
-            frappe.log_error(
-                f"BOM Item row {bom_item_row} belongs to "
-                f"{bom_item.parent}, not {bom_name}.",
-                "BOM Material Request Update",
+        if not bom_item or bom_item.parent != bom_name:
+            logger.warning(
+                f"Material Request {doc.name}: BOM Item "
+                f"{bom_item_row} does not belong to BOM {bom_name}."
             )
             continue
 
@@ -229,6 +222,126 @@ def update_bom_material_request_no(doc, method=None):
             "custom_material_request_no",
             doc.name,
             update_modified=False,
+        )
+
+        logger.info(
+            f"Material Request {doc.name} linked to "
+            f"BOM Item {bom_item_row} in BOM {bom_name}."
+        )
+
+# if delete row in bom that row releted mr is cancelled
+def cancel_linked_stock_entries(mr_name):
+    """Cancel/delete all active Stock Entries created against a Material Request."""
+
+    stock_entries = frappe.db.sql(
+        """
+        SELECT DISTINCT se.name, se.docstatus
+        FROM `tabStock Entry Detail` sed
+        JOIN `tabStock Entry` se ON se.name = sed.parent
+        WHERE sed.material_request = %s
+          AND se.docstatus < 2
+        """,
+        mr_name,
+        as_dict=True,
+    )
+
+    for row in stock_entries:
+        other_mr = frappe.db.exists(
+            "Stock Entry Detail",
+            {
+                "parent": row.name,
+                "material_request": ["not in", [mr_name, ""]],
+            },
+        )
+        if other_mr:
+            frappe.throw(
+                _("Stock Entry {0} is also linked to other Material Requests. "
+                  "Please cancel it manually first.").format(row.name)
+            )
+
+        se = frappe.get_doc("Stock Entry", row.name)
+
+        if se.docstatus == 1:
+            se.cancel()
+        elif se.docstatus == 0:
+            frappe.delete_doc("Stock Entry", row.name)
+
+    # Make sure nothing active is left before the MR is touched
+    still_linked = frappe.db.sql(
+        """
+        SELECT se.name
+        FROM `tabStock Entry Detail` sed
+        JOIN `tabStock Entry` se ON se.name = sed.parent
+        WHERE sed.material_request = %s AND se.docstatus < 2
+        """,
+        mr_name,
+    )
+    if still_linked:
+        frappe.throw(
+            _("Stock Entry {0} is still linked to Material Request {1}").format(
+                still_linked[0][0], mr_name
+            )
+        )
+
+
+def cancel_mr_when_bom_item_deleted(doc, method=None):
+    """Cancel or delete the Material Request linked to a deleted BOM Item."""
+
+    if doc.is_new():
+        return
+
+    old_doc = doc.get_doc_before_save()
+    if not old_doc:
+        return
+
+    current_rows = {row.name for row in doc.items if row.name}
+
+    deleted_rows = [
+        row for row in old_doc.items
+        if row.name not in current_rows
+        and row.get("custom_material_request_no")
+    ]
+
+    for row in deleted_rows:
+        mr_name = row.custom_material_request_no
+
+        if not frappe.db.exists("Material Request", mr_name):
+            continue
+
+        # Skip if another remaining BOM Item still references this MR
+        remaining = frappe.db.exists(
+            "BOM Item",
+            {
+                "parent": doc.name,
+                "parenttype": "BOM",
+                "custom_material_request_no": mr_name,
+                "name": ["!=", row.name],
+            },
+        )
+
+        if remaining:
+            continue
+
+        mr = frappe.get_doc("Material Request", mr_name)
+
+        if mr.docstatus == 2:
+            continue
+
+        # Clear Stock Entries first, otherwise MR cancel throws a link error
+        cancel_linked_stock_entries(mr_name)
+
+        # Reload so the MR status reflects the cancelled Stock Entries
+        mr.reload()
+
+        if mr.docstatus == 1:
+            mr.cancel()
+
+        elif mr.docstatus == 0:
+            frappe.delete_doc("Material Request", mr_name)
+
+        frappe.logger("zsystem_customize").info(
+            f"Processed Material Request {mr_name} after "
+            f"BOM Item {row.name} was deleted from {doc.name}"
         )
 # //after submit based on Sales Order No set the bom id
 def bom_set_so_data(doc, method=None):
