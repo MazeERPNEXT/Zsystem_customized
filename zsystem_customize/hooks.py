@@ -201,6 +201,7 @@ doc_events = {
         "on_update": "zsystem_customize.stock_entry.sent_email_for_panelteam",
         "on_submit":["zsystem_customize.stock_entry.update_material_request_serial_batch","zsystem_customize.material_request.update_bom_serial_batch"],
         "on_cancel": ["zsystem_customize.stock_entry.clear_material_request_serial_batch_on_cancel"],
+        # "validate": "zsystem_customize.stock_entry.set_serial_batch_from_work_order"
     },
     "Zsystem Contact Person":{
         "validate":"zsystem_customize.zsystem_customize.doctype.zsystem_contact_person.zsystem_contact_person.validate_contact_no"
@@ -211,10 +212,10 @@ doc_events = {
     "Material Request":{
         "on_submit":"zsystem_customize.bom.update_bom_material_request_no",
         # "on_update": "zsystem_customize.material_request.based_on_status_sent_the_serial_or_batchvalue"
+    },
+    "Work Order": {
+        "validate":"zsystem_customize.work_order.set_serial_batch_from_bom",
     }
-    # "Work Order": {
-    #     "before_insert":"zsystem_customize.bom.set_sales_order_in_work_order"
-    # }
 	# "*": {
 	# 	"on_update": "method",
 	# 	"on_cancel": "method",

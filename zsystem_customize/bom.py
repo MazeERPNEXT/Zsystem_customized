@@ -1,6 +1,7 @@
 import frappe
 from frappe.utils import today
 from frappe.utils import flt
+from frappe.model.workflow import apply_workflow
 
 # create po against bom
 @frappe.whitelist()
@@ -230,8 +231,60 @@ def update_bom_material_request_no(doc, method=None):
         )
 
 # if delete row in bom that row releted mr is cancelled
+# def cancel_linked_stock_entries(mr_name):
+#     """Cancel/delete all active Stock Entries created against a Material Request."""
+
+#     stock_entries = frappe.db.sql(
+#         """
+#         SELECT DISTINCT se.name, se.docstatus
+#         FROM `tabStock Entry Detail` sed
+#         JOIN `tabStock Entry` se ON se.name = sed.parent
+#         WHERE sed.material_request = %s
+#           AND se.docstatus < 2
+#         """,
+#         mr_name,
+#         as_dict=True,
+#     )
+
+#     for row in stock_entries:
+#         other_mr = frappe.db.exists(
+#             "Stock Entry Detail",
+#             {
+#                 "parent": row.name,
+#                 "material_request": ["not in", [mr_name, ""]],
+#             },
+#         )
+#         if other_mr:
+#             frappe.throw(
+#                 _("Stock Entry {0} is also linked to other Material Requests. "
+#                   "Please cancel it manually first.").format(row.name)
+#             )
+
+#         se = frappe.get_doc("Stock Entry", row.name)
+
+#         if se.docstatus == 1:
+#             se.cancel()
+#         elif se.docstatus == 0:
+#             frappe.delete_doc("Stock Entry", row.name)
+
+#     # Make sure nothing active is left before the MR is touched
+#     still_linked = frappe.db.sql(
+#         """
+#         SELECT se.name
+#         FROM `tabStock Entry Detail` sed
+#         JOIN `tabStock Entry` se ON se.name = sed.parent
+#         WHERE sed.material_request = %s AND se.docstatus < 2
+#         """,
+#         mr_name,
+#     )
+#     if still_linked:
+#         frappe.throw(
+#             _("Stock Entry {0} is still linked to Material Request {1}").format(
+#                 still_linked[0][0], mr_name
+#             )
+#         )
 def cancel_linked_stock_entries(mr_name):
-    """Cancel/delete all active Stock Entries created against a Material Request."""
+    """Cancel linked Stock Entries using their workflow."""
 
     stock_entries = frappe.db.sql(
         """
@@ -241,47 +294,36 @@ def cancel_linked_stock_entries(mr_name):
         WHERE sed.material_request = %s
           AND se.docstatus < 2
         """,
-        mr_name,
+        (mr_name,),
         as_dict=True,
     )
 
     for row in stock_entries:
-        other_mr = frappe.db.exists(
-            "Stock Entry Detail",
-            {
-                "parent": row.name,
-                "material_request": ["not in", [mr_name, ""]],
-            },
-        )
-        if other_mr:
-            frappe.throw(
-                _("Stock Entry {0} is also linked to other Material Requests. "
-                  "Please cancel it manually first.").format(row.name)
-            )
-
         se = frappe.get_doc("Stock Entry", row.name)
 
-        if se.docstatus == 1:
-            se.cancel()
-        elif se.docstatus == 0:
-            frappe.delete_doc("Stock Entry", row.name)
+        # Draft Stock Entries can be deleted directly
+        if se.docstatus == 0:
+            frappe.delete_doc("Stock Entry", se.name)
+            continue
 
-    # Make sure nothing active is left before the MR is touched
-    still_linked = frappe.db.sql(
-        """
-        SELECT se.name
-        FROM `tabStock Entry Detail` sed
-        JOIN `tabStock Entry` se ON se.name = sed.parent
-        WHERE sed.material_request = %s AND se.docstatus < 2
-        """,
-        mr_name,
-    )
-    if still_linked:
-        frappe.throw(
-            _("Stock Entry {0} is still linked to Material Request {1}").format(
-                still_linked[0][0], mr_name
+        if se.docstatus != 1:
+            continue
+
+        # Use the Stock Entry workflow cancellation action
+        workflow_state = se.get("workflow_state")
+
+        if workflow_state == "Cancelled":
+            continue
+
+        try:
+            apply_workflow(se, "Cancel")
+        except Exception:
+            frappe.log_error(
+                frappe.get_traceback(),
+                f"Failed to cancel Stock Entry {se.name} "
+                f"linked to Material Request {mr_name}",
             )
-        )
+            raise
 
 
 def cancel_mr_when_bom_item_deleted(doc, method=None):

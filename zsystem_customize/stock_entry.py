@@ -232,3 +232,48 @@ def clear_material_request_serial_batch_on_cancel(doc, method=None):
             fields_to_clear,
             update_modified=True
         )
+
+
+
+
+# //set serial no or batch based on work order
+# def set_serial_batch_from_work_order(doc, method=None):
+#     """
+#     Fetch serial and batch values from Work Order required_items
+#     and set them in Stock Entry items.
+#     """
+
+#     if doc.doctype != "Stock Entry":
+#         return
+
+#     for row in doc.items:
+#         work_order = row.get("work_order")
+
+#         if not work_order:
+#             continue
+
+#         # Get Work Order required_items child table
+#         required_items = frappe.get_all(
+#             "Work Order Item",
+#             filters={"parent": work_order},
+#             fields=[
+#                 "item_code",
+#                 "custom_serial_no",
+#                 "custom_batch_no",
+#             ],
+#         )
+
+#         # Match by item code
+#         for required_row in required_items:
+#             if required_row.item_code != row.item_code:
+#                 continue
+
+#             # Set serial number
+#             if required_row.custom_serial_no:
+#                 row.serial_no = required_row.custom_serial_no
+
+#             # Set batch number
+#             if required_row.custom_batch_no:
+#                 row.batch_no = required_row.custom_batch_no
+
+#             break

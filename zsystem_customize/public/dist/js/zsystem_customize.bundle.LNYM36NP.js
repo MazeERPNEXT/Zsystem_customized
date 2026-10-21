@@ -2887,6 +2887,12 @@
     },
     work_order: function(frm) {
       set_sales_order_value(frm);
+      set_serial_batch_from_work_order(frm);
+    },
+    refresh: function(frm) {
+      if (frm.doc.work_order) {
+        set_serial_batch_from_work_order(frm);
+      }
     }
   });
   function set_sales_order_value(frm) {
@@ -2908,5 +2914,44 @@
       }
     });
   }
+  function set_serial_batch_from_work_order(frm) {
+    if (!frm.doc.work_order)
+      return;
+    frappe.call({
+      method: "frappe.client.get",
+      args: {
+        doctype: "Work Order",
+        name: frm.doc.work_order
+      },
+      callback: function(r) {
+        if (!r.message)
+          return;
+        let required_items = r.message.required_items || [];
+        (frm.doc.items || []).forEach(function(row) {
+          let required = required_items.find(function(item) {
+            return item.item_code === row.item_code;
+          });
+          if (required) {
+            if (required.custom_serial_no) {
+              frappe.model.set_value(
+                row.doctype,
+                row.name,
+                "serial_no",
+                required.custom_serial_no
+              );
+            }
+            if (required.custom_batch_no) {
+              frappe.model.set_value(
+                row.doctype,
+                row.name,
+                "batch_no",
+                required.custom_batch_no
+              );
+            }
+          }
+        });
+      }
+    });
+  }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.25T6JYBB.js.map
+//# sourceMappingURL=zsystem_customize.bundle.LNYM36NP.js.map
