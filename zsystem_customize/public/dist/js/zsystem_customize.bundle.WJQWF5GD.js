@@ -1553,18 +1553,13 @@
     },
     refresh: function(frm) {
       frm.fields_dict.custom_created_by.$wrapper.find(".control-value").css("color", "black");
+      if (frm.is_new() && frm.doc.custom_created_by) {
+        set_concern_person(frm);
+      }
     },
     onload: function(frm) {
-      if (frm.is_new() && !frm.doc.custom_created_by) {
-        frappe.db.get_value(
-          "User",
-          frappe.session.user,
-          "full_name"
-        ).then((r) => {
-          if (r.message) {
-            frm.set_value("custom_created_by", r.message.full_name);
-          }
-        });
+      if (frm.is_new()) {
+        frm.set_value("custom_created_by", frappe.user.full_name());
       }
     },
     before_submit: function(frm) {
@@ -1616,20 +1611,7 @@
       });
     },
     custom_created_by: function(frm) {
-      if (!frm.doc.custom_created_by) {
-        frm.set_value("custom_concern_person", "");
-        return;
-      }
-      frappe.db.exists("Zsystem Contact Person", frm.doc.custom_created_by).then((exists) => {
-        if (exists) {
-          frm.set_value(
-            "custom_concern_person",
-            frm.doc.custom_created_by
-          );
-        } else {
-          frm.set_value("custom_concern_person", "");
-        }
-      });
+      set_concern_person(frm);
     }
   });
   frappe.ui.form.on("Purchase Order Item", {
@@ -1659,6 +1641,18 @@
           frappe.model.set_value(cdt, cdn, "custom_last_purchase_date", "");
         }
       }
+    });
+  }
+  function set_concern_person(frm) {
+    if (!frm.doc.custom_created_by) {
+      frm.set_value("custom_concern_person", "");
+      return;
+    }
+    frappe.db.exists("Zsystem Contact Person", frm.doc.custom_created_by).then((exists) => {
+      frm.set_value(
+        "custom_concern_person",
+        exists ? frm.doc.custom_created_by : ""
+      );
     });
   }
 
@@ -2954,4 +2948,4 @@
     });
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.LNYM36NP.js.map
+//# sourceMappingURL=zsystem_customize.bundle.WJQWF5GD.js.map

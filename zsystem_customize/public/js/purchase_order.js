@@ -48,18 +48,14 @@ frappe.ui.form.on("Purchase Order",{
         frm.fields_dict.custom_created_by.$wrapper
             .find('.control-value')
             .css('color', 'black');
+    if (frm.is_new() && frm.doc.custom_created_by) {
+            set_concern_person(frm)
+    }
+        
     },
-    onload: function(frm){
-        if (frm.is_new() && !frm.doc.custom_created_by) {
-            frappe.db.get_value(
-                "User",
-                frappe.session.user,
-                "full_name"
-            ).then(r => {
-                if (r.message) {
-                    frm.set_value("custom_created_by", r.message.full_name);
-                }
-            });
+    onload: function (frm) {
+        if (frm.is_new()) {
+            frm.set_value("custom_created_by", frappe.user.full_name());
         }
     },
     before_submit: function(frm) {
@@ -116,22 +112,23 @@ frappe.ui.form.on("Purchase Order",{
         });
     },
     custom_created_by: function(frm) {
-        if (!frm.doc.custom_created_by) {
-            frm.set_value("custom_concern_person", "");
-            return;
-        }
+        set_concern_person(frm)
+        // if (!frm.doc.custom_created_by) {
+        //     frm.set_value("custom_concern_person", "");
+        //     return;
+        // }
 
-        frappe.db.exists("Zsystem Contact Person", frm.doc.custom_created_by)
-            .then(exists => {
-                if (exists) {
-                    frm.set_value(
-                        "custom_concern_person",
-                        frm.doc.custom_created_by
-                    );
-                } else {
-                    frm.set_value("custom_concern_person", "");
-                }
-            });
+        // frappe.db.exists("Zsystem Contact Person", frm.doc.custom_created_by)
+        //     .then(exists => {
+        //         if (exists) {
+        //             frm.set_value(
+        //                 "custom_concern_person",
+        //                 frm.doc.custom_created_by
+        //             );
+        //         } else {
+        //             frm.set_value("custom_concern_person", "");
+        //         }
+        //     });
     }
 })
 // last purchase rate and date
@@ -165,4 +162,20 @@ function fetch_last_purchase_rate(frm, cdt, cdn) {
             }
         }
     });
+}
+
+// based on created by set value Concern Person
+function set_concern_person(frm) {
+    if (!frm.doc.custom_created_by) {
+        frm.set_value("custom_concern_person", "");
+        return;
+    }
+
+    frappe.db.exists("Zsystem Contact Person", frm.doc.custom_created_by)
+        .then(exists => {
+            frm.set_value(
+                "custom_concern_person",
+                exists ? frm.doc.custom_created_by : ""
+            );
+        });
 }
