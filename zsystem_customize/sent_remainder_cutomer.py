@@ -61,7 +61,7 @@ def send_docket_email(doc,method=None):
             <th align="left">Sent Through</th>
             <th align="left">Docket No.</th>
             <th align="left">Buyer Name</th>
-            <th align="right">Value</th>
+            <th align="right">Invoice Value</th>
         </tr>
 
         <tr>
@@ -105,12 +105,12 @@ def send_docket_email(doc,method=None):
     dc_pdf = frappe.get_print(
         "Delivery Note",
         delivery_note,
-        print_format="Delivery Challan",  # Use your exact print format name
+        print_format="Delivery Chellan",  # Use your exact print format name
         as_pdf=True
     )
     frappe.sendmail(
         recipients=[customer.custom_receiver_email_id], 
-        cc=["Vignesh@mazeworkssolutions.com"],
+        cc=["chandru.r@zsystem.in","rajarajan.m@zsystem.in","ramesh.p@zsystem.in"], #Vignesh@mazeworkssolutions.com "ramesh.p@zsystem.in"
         subject = subject,
         message = message,
         reference_doctype = doc.doctype,
