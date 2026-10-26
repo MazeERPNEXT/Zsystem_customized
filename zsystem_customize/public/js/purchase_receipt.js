@@ -6,11 +6,25 @@ frappe.ui.form.on("Purchase Receipt Item",{
             frappe.flags.hide_serial_batch_dialog = false;
         }
     },
-    qty: function(frm, cdt, cdn){
+    rejected_serial_no: function(frm, cdt, cdn) {
         let child = locals[cdt][cdn];
-        frappe.model.set_value(cdt, cdn, "received_qty", child.qty);
-    }
-    
+
+        let serials = child.rejected_serial_no || "";
+
+        let count = serials
+            .split(/\n|,/)
+            .map(s => s.trim())
+            .filter(s => s.length > 0).length;
+
+        frappe.model.set_value(cdt, cdn, "rejected_qty", count);
+    },
+    qty: function(frm, cdt, cdn) {
+        let child = locals[cdt][cdn];
+
+        let received_qty = (child.qty || 0) + (child.rejected_qty || 0);
+
+        frappe.model.set_value(cdt, cdn, "received_qty", received_qty);
+    },
 });
 
 frappe.ui.form.on("Purchase Receipt", {
@@ -43,6 +57,32 @@ frappe.ui.form.on("Purchase Receipt", {
 
         // All item rows have an HSN code
         frm.set_value("custom_is_hsn_code_verified", 1);
+    },
+    refresh(frm) {
+        const rename_purchase_return = () => {
+            $('.es-menu__item').each(function () {
+                const label = $(this).find('.es-menu__label');
+
+                if (label.length && label.text().trim() === 'Purchase Return') {
+                    label.text('Customer Material Return');
+                }
+            });
+        };
+
+        // Run immediately
+        rename_purchase_return();
+
+        // Watch for dynamically rendered menu items
+        if (!window.purchase_return_observer) {
+            window.purchase_return_observer = new MutationObserver(() => {
+                rename_purchase_return();
+            });
+
+            window.purchase_return_observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        }
     }
 });
 

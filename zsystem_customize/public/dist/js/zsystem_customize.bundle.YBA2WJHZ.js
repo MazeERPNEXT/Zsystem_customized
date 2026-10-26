@@ -1235,6 +1235,23 @@
         frm.set_value("custom_sales_person", r.message.custom_sales_person || "");
         frm.set_value("custom_payment_days", r.message.custom_payment_term || "");
       }
+    },
+    before_save: function(frm) {
+      let mobile_no = frm.doc.contact_mobile;
+      if (!mobile_no)
+        return;
+      let covert_mobile_no = mobile_no.replace(/^\+91/, "").replace(/\s+/g, "").replace(/^91(?=\d{10}$)/, "");
+      if (!/^[6-9]\d{9}$/.test(covert_mobile_no)) {
+        frappe.msgprint({
+          title: "Invalid Mobile Number",
+          message: "Not an India number. Please enter a valid Indian mobile number for sent msg.",
+          indicator: "red"
+        });
+        return;
+      }
+      let whatsapp_no = "91" + covert_mobile_no;
+      console.log("Whatsapp no:", whatsapp_no);
+      frm.set_value("custom_whatsapp_no", whatsapp_no);
     }
   });
 
@@ -1251,6 +1268,19 @@
           frm.doc.custom_expense_head
         );
       });
+    }
+  });
+  frappe.ui.form.on("Purchase Invoice Item", {
+    rejected_serial_no: function(frm, cdt, cdn) {
+      let child = locals[cdt][cdn];
+      let serials = child.rejected_serial_no || "";
+      let count = serials.split(/\n|,/).map((s) => s.trim()).filter((s) => s.length > 0).length;
+      frappe.model.set_value(cdt, cdn, "rejected_qty", count);
+    },
+    qty: function(frm, cdt, cdn) {
+      let child = locals[cdt][cdn];
+      let received_qty = (child.qty || 0) + (child.rejected_qty || 0);
+      frappe.model.set_value(cdt, cdn, "received_qty", received_qty);
     }
   });
 
@@ -1556,6 +1586,7 @@
       if (frm.is_new() && frm.doc.custom_created_by) {
         set_concern_person(frm);
       }
+      toggle_items_buttons(frm);
     },
     onload: function(frm) {
       if (frm.is_new()) {
@@ -1654,6 +1685,23 @@
         exists ? frm.doc.custom_created_by : ""
       );
     });
+  }
+  function toggle_items_buttons(frm) {
+    if (frm.doctype !== "Purchase Order")
+      return;
+    const has_sales_order = (frm.doc.items || []).some(
+      (row) => row.sales_order || row.custom_sales_order_no
+    );
+    const grid = frm.fields_dict.items.grid;
+    if (!grid)
+      return;
+    if (has_sales_order) {
+      grid.wrapper.find(".grid-add-row").hide();
+      grid.wrapper.find(".grid-add-multiple-rows").hide();
+    } else {
+      grid.wrapper.find(".grid-add-row").show();
+      grid.wrapper.find(".grid-add-multiple-rows").show();
+    }
   }
 
   // ../zsystem_customize/zsystem_customize/public/js/override_so.js
@@ -2199,12 +2247,12 @@
     }
     make_purchase_order() {
       let pending_items = this.frm.doc.items.some((item) => {
-        const pending_qty = flt(item.stock_qty) - this.get_ordered_qty(item, this.frm.doc);
+        const pending_qty = flt(item.custom_balance_qty) - this.get_ordered_qty(item, this.frm.doc);
         return pending_qty > 0;
       });
       if (!pending_items) {
         frappe.throw({
-          message: __("Purchase Order already created for all Sales Order items"),
+          message: __("No Balance qty for created Purchase Order in Sales Order items"),
           title: __("Note")
         });
       }
@@ -2289,14 +2337,16 @@
           if (!args)
             return;
           let selected_items = dialog.fields_dict.items_for_po.grid.get_selected_children();
-          if (selected_items.length == 0) {
+          if (selected_items.length === 0) {
             frappe.throw({
-              message: "Please select Items from the Table",
+              message: __("Please select Items from the Table"),
               title: __("Items Required"),
               indicator: "blue"
             });
           }
-          let has_low_stock = selected_items.some((item) => item.is_low_stock);
+          let has_low_stock = selected_items.some(
+            (item) => item.is_low_stock
+          );
           if (has_low_stock && !args.confirm_low_stock) {
             dialog.get_field("confirm_low_stock").df.hidden = 0;
             dialog.get_field("confirm_low_stock").refresh();
@@ -2325,7 +2375,11 @@
                 if (!args.against_default_supplier) {
                   frappe.model.sync(r.message);
                   let doc = Array.isArray(r.message) ? r.message[0] : r.message;
-                  frappe.set_route("Form", doc.doctype, doc.name);
+                  frappe.set_route(
+                    "Form",
+                    doc.doctype,
+                    doc.name
+                  );
                 } else {
                   frappe.route_options = {
                     sales_order: me.frm.doc.name
@@ -2342,7 +2396,9 @@
         var against_default_supplier = dialog2.get_value("against_default_supplier");
         var items_for_po = dialog2.get_value("items_for_po");
         if (against_default_supplier) {
-          let items_with_supplier = items_for_po.filter((item) => item.supplier);
+          let items_with_supplier = items_for_po.filter(
+            (item) => item.supplier
+          );
           dialog2.fields_dict["items_for_po"].df.data = items_with_supplier;
           dialog2.get_field("items_for_po").refresh();
         } else {
@@ -2351,13 +2407,25 @@
           dialog2.get_field("confirm_low_stock").df.hidden = 1;
           dialog2.get_field("confirm_low_stock").refresh();
           for (const d of me.frm.doc.items) {
-            let ordered_qty = me.get_ordered_qty(d, me.frm.doc);
+            if (flt(d.custom_balance_qty) === 0) {
+              continue;
+            }
+            let ordered_qty = me.get_ordered_qty(
+              d,
+              me.frm.doc
+            );
             let pending_qty = (flt(d.stock_qty) - ordered_qty) / flt(d.conversion_factor);
             if (pending_qty > 0) {
               let custom_stock_qty = 0;
               try {
-                const res = await frappe.db.get_value("Item", d.item_code, "custom_stock_qty");
-                custom_stock_qty = flt(res && res.message && res.message.custom_stock_qty);
+                const res = await frappe.db.get_value(
+                  "Item",
+                  d.item_code,
+                  "custom_stock_qty"
+                );
+                custom_stock_qty = flt(
+                  res && res.message && res.message.custom_stock_qty
+                );
               } catch (e) {
                 custom_stock_qty = 0;
               }
@@ -2948,4 +3016,4 @@
     });
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.WJQWF5GD.js.map
+//# sourceMappingURL=zsystem_customize.bundle.YBA2WJHZ.js.map

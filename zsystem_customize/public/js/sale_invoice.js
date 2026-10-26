@@ -49,5 +49,31 @@ frappe.ui.form.on("Sales Invoice",{
             frm.set_value("custom_sales_person",r.message.custom_sales_person || '')
             frm.set_value("custom_payment_days",r.message.custom_payment_term || '')
         }
+    },
+    //set value in whatsapp no field based on mobile no value
+    before_save: function(frm) {
+        let mobile_no = frm.doc.contact_mobile;
+
+        if (!mobile_no) return;
+
+        let covert_mobile_no = mobile_no
+            .replace(/^\+91/, "")
+            .replace(/\s+/g, "")
+            .replace(/^91(?=\d{10}$)/, "");
+
+        // Validate Indian mobile number
+        if (!/^[6-9]\d{9}$/.test(covert_mobile_no)) {
+            frappe.msgprint({
+                title: "Invalid Mobile Number",
+                message: "Not an India number. Please enter a valid Indian mobile number for sent msg.",
+                indicator: "red"
+            });
+            return;
+        }
+
+        let whatsapp_no = "91" + covert_mobile_no;
+
+        console.log("Whatsapp no:", whatsapp_no);
+        frm.set_value("custom_whatsapp_no",whatsapp_no);
     }
 });

@@ -48,9 +48,11 @@ frappe.ui.form.on("Purchase Order",{
         frm.fields_dict.custom_created_by.$wrapper
             .find('.control-value')
             .css('color', 'black');
-    if (frm.is_new() && frm.doc.custom_created_by) {
-            set_concern_person(frm)
-    }
+        if (frm.is_new() && frm.doc.custom_created_by) {
+                set_concern_person(frm)
+        }
+        //based on so to po hide add and multiple add item btn
+        toggle_items_buttons(frm);
         
     },
     onload: function (frm) {
@@ -178,4 +180,25 @@ function set_concern_person(frm) {
                 exists ? frm.doc.custom_created_by : ""
             );
         });
+}
+
+//based on so to po hide add and multiple add item btn
+function toggle_items_buttons(frm) {
+    if (frm.doctype !== "Purchase Order") return;
+
+    const has_sales_order = (frm.doc.items || []).some(row =>
+        row.sales_order || row.custom_sales_order_no
+    );
+
+    const grid = frm.fields_dict.items.grid;
+
+    if (!grid) return;
+
+    if (has_sales_order) {
+        grid.wrapper.find(".grid-add-row").hide();
+        grid.wrapper.find(".grid-add-multiple-rows").hide();
+    } else {
+        grid.wrapper.find(".grid-add-row").show();
+        grid.wrapper.find(".grid-add-multiple-rows").show();
+    }
 }

@@ -337,3 +337,5 @@ def custom_make_purchase_order(source_name, selected_items=None):
     )
 
     return doc
+
+# //based on so to po validate that row already create ord not

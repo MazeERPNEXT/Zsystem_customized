@@ -628,216 +628,269 @@ zsystem_customize.selling.SalesOrderController = class CustomSalesOrderControlle
 		});
 	}
 
-	make_purchase_order() {
-		let pending_items = this.frm.doc.items.some((item) => {
-			const pending_qty = flt(item.stock_qty) - this.get_ordered_qty(item, this.frm.doc);
-			return pending_qty > 0;
-		});
-		if (!pending_items) {
-			frappe.throw({
-				message: __("Purchase Order already created for all Sales Order items"),
-				title: __("Note"),
-			});
-		}
- 
-		var me = this;
-		var dialog = new frappe.ui.Dialog({
-			title: __("Select Items"),
-			size: "large",
-			fields: [
-				{
-					fieldtype: "Check",
-					label: __("Against Default Supplier"),
-					fieldname: "against_default_supplier",
-					default: 0,
-				},
-				{
-					fieldname: "items_for_po",
-					fieldtype: "Table",
-					label: __("Select Items"),
-					fields: [
-						{
-							fieldtype: "Data",
-							fieldname: "item_code",
-							label: __("Item"),
-							read_only: 1,
-							in_list_view: 1,
-						},
-						{
-							fieldtype: "Data",
-							fieldname: "item_name",
-							label: __("Item name"),
-							read_only: 1,
-							in_list_view: 1,
-						},
-						{
-							fieldtype: "Float",
-							fieldname: "pending_qty",
-							label: __("Pending Qty"),
-							read_only: 1,
-							in_list_view: 1,
-						},
-						{
-							fieldtype: "Link",
-							read_only: 1,
-							fieldname: "uom",
-							label: __("UOM"),
-							options: "UOM",
-							in_list_view: 1,
-						},
-						{
-							fieldtype: "Data",
-							fieldname: "supplier",
-							label: __("Supplier"),
-							read_only: 1,
-							in_list_view: 1,
-						},
-						// NEW: show the Item master's minimum/custom stock qty
-						{
-							fieldtype: "Float",
-							fieldname: "custom_stock_qty",
-							label: __("Custom Stock Qty"),
-							read_only: 1,
-							in_list_view: 1,
-						},
-						// NEW: flag row as short so it's visible in the grid
-						{
-							fieldtype: "Check",
-							fieldname: "is_low_stock",
-							label: __("Low Stock"),
-							read_only: 1,
-							in_list_view: 1,
-						},
-					],
-				},
-				// NEW: hidden confirmation checkbox, revealed only when needed
-				{
-					fieldtype: "Check",
-					fieldname: "confirm_low_stock",
-					label: __("I confirm creation of Purchase Order despite Already stock qty"),
-					default: 0,
-					hidden: 1,
-				},
-			],
-			primary_action_label: __("Create Purchase Order"),
-			primary_action(args) {
-				if (!args) return;
- 
-				let selected_items = dialog.fields_dict.items_for_po.grid.get_selected_children();
-				if (selected_items.length == 0) {
-					frappe.throw({
-						message: "Please select Items from the Table",
-						title: __("Items Required"),
-						indicator: "blue",
-					});
-				}
- 
-				// NEW: check for any selected item whose qty is short vs custom_stock_qty
-				let has_low_stock = selected_items.some((item) => item.is_low_stock);
- 
-				if (has_low_stock && !args.confirm_low_stock) {
-					// reveal the checkbox and stop — wait for user to tick it and click Create again
-					dialog.get_field("confirm_low_stock").df.hidden = 0;
-					dialog.get_field("confirm_low_stock").refresh();
-					frappe.msgprint({
-						title: __("Already Stock"),
-						message: __(
-							"One or more selected items have Pending Qty have Already Stock Qty. Please confirm below to proceed."
-						),
-						indicator: "orange",
-					});
-					return;
-				}
- 
-				dialog.hide();
- 
-				var method = args.against_default_supplier
-    ? "make_purchase_order_for_default_supplier"
-    : "custom_make_purchase_order";
+	
+make_purchase_order() {
+    let pending_items = this.frm.doc.items.some((item) => {
+        const pending_qty =
+            flt(item.custom_balance_qty) -
+            this.get_ordered_qty(item, this.frm.doc);
 
-var call_method = args.against_default_supplier
-    ? "erpnext.selling.doctype.sales_order.sales_order." + method
-	    : "zsystem_customize.sales_order." + method;
-return frappe.call({
-    method: call_method,
-					freeze_message: __("Creating Purchase Order ..."),
-					args: {
-						source_name: me.frm.doc.name,
-						selected_items: selected_items,
-					},
-					freeze: true,
-					callback: function (r) {
-					    if (!r.exc) {
-       						 if (!args.against_default_supplier) {
-  					    	      frappe.model.sync(r.message);
-        					      let doc = Array.isArray(r.message) ? r.message[0] : r.message;
-   					              frappe.set_route("Form", doc.doctype, doc.name);
-       						 } else {
-								frappe.route_options = {
-									sales_order: me.frm.doc.name,
-								};
-								frappe.set_route("List", "Purchase Order");
-							}
-						}
-					},
-				});
-			},
-		});
- 
-		dialog.fields_dict["against_default_supplier"].df.onchange = () => set_po_items_data(dialog);
- 
-		// NEW: async so we can fetch custom_stock_qty per item from Item master
-		async function set_po_items_data(dialog) {
-			var against_default_supplier = dialog.get_value("against_default_supplier");
-			var items_for_po = dialog.get_value("items_for_po");
- 
-			if (against_default_supplier) {
-				let items_with_supplier = items_for_po.filter((item) => item.supplier);
-				dialog.fields_dict["items_for_po"].df.data = items_with_supplier;
-				dialog.get_field("items_for_po").refresh();
-			} else {
-				let po_items = [];
- 
-				// reset the confirmation checkbox each time the table is rebuilt
-				dialog.set_value("confirm_low_stock", 0);
-				dialog.get_field("confirm_low_stock").df.hidden = 1;
-				dialog.get_field("confirm_low_stock").refresh();
- 
-				for (const d of me.frm.doc.items) {
-					let ordered_qty = me.get_ordered_qty(d, me.frm.doc);
-					let pending_qty = (flt(d.stock_qty) - ordered_qty) / flt(d.conversion_factor);
-					if (pending_qty > 0) {
-						let custom_stock_qty = 0;
-						try {
-							const res = await frappe.db.get_value("Item", d.item_code, "custom_stock_qty");
-							custom_stock_qty = flt(res && res.message && res.message.custom_stock_qty);
-						} catch (e) {
-							custom_stock_qty = 0;
-						}
- 
-						po_items.push({
-							name: d.name,
-							item_name: d.item_name,
-							item_code: d.item_code,
-							pending_qty: pending_qty,
-							uom: d.uom,
-							supplier: d.supplier,
-							custom_stock_qty: custom_stock_qty,
-							is_low_stock: flt(pending_qty) < custom_stock_qty,
-						});
-					}
-				}
- 
-				dialog.fields_dict["items_for_po"].df.data = po_items;
-				dialog.get_field("items_for_po").refresh();
-			}
-		}
- 
-		set_po_items_data(dialog);
-		dialog.get_field("items_for_po").grid.only_sortable();
-		dialog.get_field("items_for_po").refresh();
-		dialog.show();
-	}
+        return pending_qty > 0;
+    });
+
+    if (!pending_items) {
+        frappe.throw({
+            message: __("No Balance qty for created Purchase Order in Sales Order items"),
+            title: __("Note"),
+        });
+    }
+
+    var me = this;
+
+    var dialog = new frappe.ui.Dialog({
+        title: __("Select Items"),
+        size: "large",
+        fields: [
+            {
+                fieldtype: "Check",
+                label: __("Against Default Supplier"),
+                fieldname: "against_default_supplier",
+                default: 0,
+            },
+            {
+                fieldname: "items_for_po",
+                fieldtype: "Table",
+                label: __("Select Items"),
+                fields: [
+                    {
+                        fieldtype: "Data",
+                        fieldname: "item_code",
+                        label: __("Item"),
+                        read_only: 1,
+                        in_list_view: 1,
+                    },
+                    {
+                        fieldtype: "Data",
+                        fieldname: "item_name",
+                        label: __("Item name"),
+                        read_only: 1,
+                        in_list_view: 1,
+                    },
+                    {
+                        fieldtype: "Float",
+                        fieldname: "pending_qty",
+                        label: __("Pending Qty"),
+                        read_only: 1,
+                        in_list_view: 1,
+                    },
+                    {
+                        fieldtype: "Link",
+                        read_only: 1,
+                        fieldname: "uom",
+                        label: __("UOM"),
+                        options: "UOM",
+                        in_list_view: 1,
+                    },
+                    {
+                        fieldtype: "Data",
+                        fieldname: "supplier",
+                        label: __("Supplier"),
+                        read_only: 1,
+                        in_list_view: 1,
+                    },
+                    {
+                        fieldtype: "Float",
+                        fieldname: "custom_stock_qty",
+                        label: __("Custom Stock Qty"),
+                        read_only: 1,
+                        in_list_view: 1,
+                    },
+                    {
+                        fieldtype: "Check",
+                        fieldname: "is_low_stock",
+                        label: __("Low Stock"),
+                        read_only: 1,
+                        in_list_view: 1,
+                    },
+                ],
+            },
+            {
+                fieldtype: "Check",
+                fieldname: "confirm_low_stock",
+                label: __("I confirm creation of Purchase Order despite Already stock qty"),
+                default: 0,
+                hidden: 1,
+            },
+        ],
+
+        primary_action_label: __("Create Purchase Order"),
+
+        primary_action(args) {
+            if (!args) return;
+
+            let selected_items =
+                dialog.fields_dict.items_for_po.grid.get_selected_children();
+
+            if (selected_items.length === 0) {
+                frappe.throw({
+                    message: __("Please select Items from the Table"),
+                    title: __("Items Required"),
+                    indicator: "blue",
+                });
+            }
+
+            let has_low_stock = selected_items.some(
+                (item) => item.is_low_stock
+            );
+
+            if (has_low_stock && !args.confirm_low_stock) {
+                dialog.get_field("confirm_low_stock").df.hidden = 0;
+                dialog.get_field("confirm_low_stock").refresh();
+
+                frappe.msgprint({
+                    title: __("Already Stock"),
+                    message: __(
+                        "One or more selected items have Pending Qty have Already Stock Qty. Please confirm below to proceed."
+                    ),
+                    indicator: "orange",
+                });
+
+                return;
+            }
+
+            dialog.hide();
+
+            var method = args.against_default_supplier
+                ? "make_purchase_order_for_default_supplier"
+                : "custom_make_purchase_order";
+
+            var call_method = args.against_default_supplier
+                ? "erpnext.selling.doctype.sales_order.sales_order." + method
+                : "zsystem_customize.sales_order." + method;
+
+            return frappe.call({
+                method: call_method,
+                freeze_message: __("Creating Purchase Order ..."),
+                args: {
+                    source_name: me.frm.doc.name,
+                    selected_items: selected_items,
+                },
+                freeze: true,
+
+                callback: function (r) {
+                    if (!r.exc) {
+                        if (!args.against_default_supplier) {
+                            frappe.model.sync(r.message);
+
+                            let doc = Array.isArray(r.message)
+                                ? r.message[0]
+                                : r.message;
+
+                            frappe.set_route(
+                                "Form",
+                                doc.doctype,
+                                doc.name
+                            );
+                        } else {
+                            frappe.route_options = {
+                                sales_order: me.frm.doc.name,
+                            };
+
+                            frappe.set_route("List", "Purchase Order");
+                        }
+                    }
+                },
+            });
+        },
+    });
+
+    dialog.fields_dict["against_default_supplier"].df.onchange = () =>
+        set_po_items_data(dialog);
+
+    async function set_po_items_data(dialog) {
+        var against_default_supplier =
+            dialog.get_value("against_default_supplier");
+
+        var items_for_po = dialog.get_value("items_for_po");
+
+        if (against_default_supplier) {
+            let items_with_supplier = items_for_po.filter(
+                (item) => item.supplier
+            );
+
+            dialog.fields_dict["items_for_po"].df.data =
+                items_with_supplier;
+
+            dialog.get_field("items_for_po").refresh();
+        } else {
+            let po_items = [];
+
+            dialog.set_value("confirm_low_stock", 0);
+            dialog.get_field("confirm_low_stock").df.hidden = 1;
+            dialog.get_field("confirm_low_stock").refresh();
+
+            for (const d of me.frm.doc.items) {
+
+                // NEW: Skip rows where custom_balance_qty is zero or empty
+                if (flt(d.custom_balance_qty) === 0) {
+                    continue;
+                }
+
+                let ordered_qty = me.get_ordered_qty(
+                    d,
+                    me.frm.doc
+                );
+
+                let pending_qty =
+                    (flt(d.stock_qty) - ordered_qty) /
+                    flt(d.conversion_factor);
+
+                if (pending_qty > 0) {
+                    let custom_stock_qty = 0;
+
+                    try {
+                        const res = await frappe.db.get_value(
+                            "Item",
+                            d.item_code,
+                            "custom_stock_qty"
+                        );
+
+                        custom_stock_qty = flt(
+                            res &&
+                            res.message &&
+                            res.message.custom_stock_qty
+                        );
+                    } catch (e) {
+                        custom_stock_qty = 0;
+                    }
+
+                    po_items.push({
+                        name: d.name,
+                        item_name: d.item_name,
+                        item_code: d.item_code,
+                        pending_qty: pending_qty,
+                        uom: d.uom,
+                        supplier: d.supplier,
+                        custom_stock_qty: custom_stock_qty,
+                        is_low_stock:
+                            flt(pending_qty) < custom_stock_qty,
+                    });
+                }
+            }
+
+            dialog.fields_dict["items_for_po"].df.data = po_items;
+            dialog.get_field("items_for_po").refresh();
+        }
+    }
+
+    set_po_items_data(dialog);
+
+    dialog.get_field("items_for_po").grid.only_sortable();
+    dialog.get_field("items_for_po").refresh();
+
+    dialog.show();
+}
+
 	get_ordered_qty(item, so) {
 		let ordered_qty = item.ordered_qty;
 		if (so.packed_items && so.packed_items.length) {

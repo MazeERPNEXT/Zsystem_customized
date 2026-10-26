@@ -215,6 +215,9 @@ doc_events = {
     },
     "Work Order": {
         "validate":"zsystem_customize.work_order.set_serial_batch_from_bom",
+    },
+    "Contact": {
+        "validate": "zsystem_customize.contact.validate_mobile_no"
     }
 	# "*": {
 	# 	"on_update": "method",
