@@ -3,26 +3,36 @@
 
 frappe.ui.form.on("Quotation Estimation", {
     refresh(frm) {
-        frm.add_custom_button(__('<i class="fa fa-file-excel-o " style="font-size:24px;color:green"></i>'), function() {
-            var names = frm.doc.name;
-            console.log(names)
-            window.open("/api/method/zsystem_customize.zsystem_customize.doctype.quotation_estimation.quotation_estimation.get_excel_process?name=" + names, '_blank');
+        frm.add_custom_button("Export Excel", function () {
+            window.open(
+                "/api/method/zsystem_customize.zsystem_customize.doctype.quotation_estimation.quotation_estimation.get_excel_process?name="
+                + encodeURIComponent(frm.doc.name),
+                "_blank"
+            );
         });
-        //Custom Quotation Btn
-        if(frm.doc.docstatus == "1"){
-            frm.add_custom_button(__("Quotation"),
-        ()=>frm.events.make_quotation_estimation_to_quotation(frm),
-        __("Create"))
-         create_btn = frm.page.set_inner_btn_group_as_primary(__('Create'));
 
-        // apply css to the actual button element
-        $(create_btn).css({
-            'background-color': 'black',
-            'color': 'white'
-        });
+        // Apply green color to Export Excel button
+        setTimeout(() => {
+            frm.page.wrapper
+                .find('button.es-button[data-label="Export%20Excel"]')
+                .css({
+                    "background-color": "green",
+                    "color": "white",
+                    "border-color": "green"
+                });
+        }, 100);
+
+        // Custom Quotation Button
+        if (frm.doc.docstatus === 1) {
+            frm.add_custom_button(
+                __("Quotation"),
+                () => frm.events.make_quotation_estimation_to_quotation(frm),
+                __("Create")
+            );
+
+            frm.page.set_inner_btn_group_as_primary(__("Create"));
         }
-        
-    }, 
+    },
     on_change(frm, cdt, cdn) {
         calculate_total_unitkp(frm);
         calculate_total_lpvalue(frm);
