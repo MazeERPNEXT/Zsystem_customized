@@ -110,7 +110,7 @@ def send_docket_email(doc,method=None):
     )
     frappe.sendmail(
         recipients=[customer.custom_receiver_email_id], 
-        cc=["chandru.r@zsystem.in","rajarajan.m@zsystem.in","ramesh.p@zsystem.in"], #Vignesh@mazeworkssolutions.com "ramesh.p@zsystem.in"
+        cc=["chandru.r@zsystem.in","rajarajan.m@zsystem.in","ramesh.p@zsystem.in","vivek.s@zsystem.in"], #Vignesh@mazeworkssolutions.com 
         subject = subject,
         message = message,
         reference_doctype = doc.doctype,

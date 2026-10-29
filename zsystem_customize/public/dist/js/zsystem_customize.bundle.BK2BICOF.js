@@ -1268,6 +1268,32 @@
           frm.doc.custom_expense_head
         );
       });
+    },
+    bill_no(frm) {
+      if (!frm.doc.bill_no || !frm.doc.supplier) {
+        return;
+      }
+      frappe.db.get_list("Purchase Invoice", {
+        filters: {
+          bill_no: frm.doc.bill_no,
+          supplier: frm.doc.supplier,
+          name: ["!=", frm.doc.name || ""]
+        },
+        fields: ["name"],
+        limit: 1
+      }).then((records) => {
+        if (records.length > 0) {
+          frappe.msgprint({
+            title: __("Validation Error"),
+            indicator: "red",
+            message: __("Bill No {0} already exists for Supplier {1}.", [
+              frm.doc.bill_no,
+              frm.doc.supplier
+            ])
+          });
+          frm.set_value("bill_no", "");
+        }
+      });
     }
   });
   frappe.ui.form.on("Purchase Invoice Item", {
@@ -3016,4 +3042,4 @@
     });
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.YBA2WJHZ.js.map
+//# sourceMappingURL=zsystem_customize.bundle.BK2BICOF.js.map

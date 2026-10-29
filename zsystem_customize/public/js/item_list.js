@@ -10,27 +10,7 @@ frappe.listview_settings["Item"] = {
 
 function apply_item_list_customization() {
     setTimeout(() => {
-        // -----------------------------
-        // 1) Hide Status header + values
-        // -----------------------------
-        $('.list-row-col').each(function () {
-            let txt = $(this).text().trim();
-
-            if (txt === "Status") {
-                $(this).hide();
-            }
-
-            if (
-                $(this).find('.indicator-pill').length &&
-                (txt === "Enabled" || txt === "Disabled")
-            ) {
-                $(this).hide();
-            }
-        });
-
-        // -----------------------------------------
-        // 2) Move ID header after Description header
-        // -----------------------------------------
+        // 1) Move ID header after Description header
         let $header = $('.list-row-head');
         let $header_cols = $header.find('.list-row-col');
 
@@ -39,23 +19,15 @@ function apply_item_list_customization() {
 
         $header_cols.each(function () {
             let txt = $(this).text().trim();
-
-            if (txt === "ID") {
-                $id_header = $(this);
-            }
-
-            if (txt === "Description") {
-                $desc_header = $(this);
-            }
+            if (txt === "ID") $id_header = $(this);
+            if (txt === "Description") $desc_header = $(this);
         });
 
         if ($id_header && $desc_header) {
             $id_header.insertAfter($desc_header);
         }
 
-        // -------------------------------------------------
-        // 3) Move each row's ID value after Description value
-        // -------------------------------------------------
+        // 2) Move each row's ID value after Description value
         $('.list-row-container .list-row').each(function () {
             let $row = $(this);
             let $cols = $row.find('.list-row-col');
@@ -66,12 +38,10 @@ function apply_item_list_customization() {
             $cols.each(function () {
                 let $col = $(this);
 
-                // ID value column
                 if ($col.find('span[title^="ID:"]').length) {
                     $id_col = $col;
                 }
 
-                // Description value column = first normal text column
                 if (
                     !$desc_col &&
                     !$col.find('span[title^="ID:"]').length &&
@@ -87,5 +57,27 @@ function apply_item_list_customization() {
                 $id_col.insertAfter($desc_col);
             }
         });
+
+        // 3) Set "Status" header above the Enabled/Disabled column
+        let $first_row = $('.list-row-container .list-row').first();
+        let status_index = -1;
+
+        $first_row.find('.list-row-col').each(function (i) {
+            if ($(this).find('.indicator-pill').length) {
+                status_index = i;
+            }
+        });
+
+        if (status_index > -1) {
+            let $status_header = $('.list-row-head .list-row-col').eq(status_index);
+            let $span = $status_header.find('span').first();
+
+            if ($span.length) {
+                $span.text("Status");
+            } else {
+                $status_header.text("Status");
+            }
+            $status_header.show();
+        }
     }, 500);
 }
