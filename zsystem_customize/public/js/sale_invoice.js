@@ -75,5 +75,47 @@ frappe.ui.form.on("Sales Invoice",{
 
         console.log("Whatsapp no:", whatsapp_no);
         frm.set_value("custom_whatsapp_no",whatsapp_no);
+    },
+    async after_save(frm) {
+        // Get customer details
+        const customer = frm.doc.customer;
+
+        const response = await frappe.db.get_value(
+            "Customer",
+            customer,
+            "custom_receiver_email_id"
+        );
+
+        const customer_email = response.message?.custom_receiver_email_id;
+
+        // Validate WhatsApp number
+        if (!frm.doc.custom_whatsapp_no) {
+            frappe.msgprint({
+                title: __("Notification"),
+                message: __("No mobile number found. Cannot send notification."),
+                indicator: "orange"
+            });
+            return;
+        }
+
+        // Validate Email
+        if (!customer_email) {
+            frappe.msgprint({
+                title: __("Notification"),
+                message: __("No Email found. Cannot send notification."),
+                indicator: "orange"
+            });
+            return;
+        }
+
+        // Display both details
+        frappe.msgprint({
+            title: __("Notification Details"),
+            message: `
+                <b>WhatsApp No:</b> ${frm.doc.custom_whatsapp_no}<br>
+                <b>Email:</b> ${customer_email}
+            `,
+            indicator: "green"
+        });
     }
 });

@@ -1252,6 +1252,40 @@
       let whatsapp_no = "91" + covert_mobile_no;
       console.log("Whatsapp no:", whatsapp_no);
       frm.set_value("custom_whatsapp_no", whatsapp_no);
+    },
+    async after_save(frm) {
+      var _a;
+      const customer = frm.doc.customer;
+      const response = await frappe.db.get_value(
+        "Customer",
+        customer,
+        "custom_receiver_email_id"
+      );
+      const customer_email = (_a = response.message) == null ? void 0 : _a.custom_receiver_email_id;
+      if (!frm.doc.custom_whatsapp_no) {
+        frappe.msgprint({
+          title: __("Notification"),
+          message: __("No mobile number found. Cannot send notification."),
+          indicator: "orange"
+        });
+        return;
+      }
+      if (!customer_email) {
+        frappe.msgprint({
+          title: __("Notification"),
+          message: __("No Email found. Cannot send notification."),
+          indicator: "orange"
+        });
+        return;
+      }
+      frappe.msgprint({
+        title: __("Notification Details"),
+        message: `
+                <b>WhatsApp No:</b> ${frm.doc.custom_whatsapp_no}<br>
+                <b>Email:</b> ${customer_email}
+            `,
+        indicator: "green"
+      });
     }
   });
 
@@ -3042,4 +3076,4 @@
     });
   }
 })();
-//# sourceMappingURL=zsystem_customize.bundle.BK2BICOF.js.map
+//# sourceMappingURL=zsystem_customize.bundle.GKXMV3GA.js.map
