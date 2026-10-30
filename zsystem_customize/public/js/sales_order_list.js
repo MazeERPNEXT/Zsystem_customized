@@ -49,110 +49,206 @@ frappe.listview_settings['Sales Order'] = {
         listview.sort_by = "po_date";   // Fieldname
         listview.sort_order = "desc";   // or "asc"
     },
-    onload(listview) {
-        const SECTION_FIELDS = {
-            'Sales Order': [
-                'ID', 'Customer/Company Name', 'Order Type', 'Created Date', 'Sales person', "Customer's Purchase Order No", "Customer's Purchase Order Date","Status",
-                'Grand Total', 'Rounded Total (Company Currency)'
-            ],
-            'Items (Sales Order Item) (1 row mandatory)': [
-                'Item Code', 'Description', 'Item Group', 'UOM', 'Quantity','Balance Qty','Delivered Qty', 'Rate', 'Amount', 'Brand'
-            ],
-            'Packed Items (Packed Item)': [
-                " "
-            ],
-            'Sales Taxes and Charges (Sales Taxes and Charges)':[
-                ""
-            ]
-        };
+    
+onload(listview) {
 
-        function cleanText($el) {
-            return $el.clone().children().remove().end().text().trim();
-        }
+    const SECTION_FIELDS = {
+        'Sales Order': [
+            'ID',
+            'Customer/Company Name',
+            'Order Type',
+            'Created Date',
+            'Sales person',
+            "Customer's Purchase Order No",
+            "Customer's Purchase Order Date",
+            'Status',
+            'Grand Total',
+            'Rounded Total (Company Currency)'
+        ],
 
-        function normalize(str) {
-            return (str || '').replace(/\s+/g, ' ').trim().toLowerCase();
-        }
+        'Items (Sales Order Item) (1 row mandatory)': [
+            'Item Code',
+            'Description',
+            'Item Group',
+            'UOM',
+            'Quantity',
+            'Balance Qty',
+            'Delivered Qty',
+            'Rate',
+            'Amount',
+            'Brand Name'
+        ],
 
-        const NORMALIZED_SECTIONS = {};
-        Object.keys(SECTION_FIELDS).forEach(section => {
-            NORMALIZED_SECTIONS[normalize(section)] = section;
+        'Packed Items (Packed Item)': [],
+
+        'Sales Taxes and Charges (Sales Taxes and Charges)': []
+    };
+
+    function normalize(str) {
+        return (str || '')
+            .replace(/\*/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase();
+    }
+
+    const NORMALIZED_SECTIONS = {};
+
+    Object.keys(SECTION_FIELDS).forEach(section => {
+        NORMALIZED_SECTIONS[normalize(section)] = section;
+    });
+
+    function applyDefaults($modal) {
+
+        const modalBody = $modal.find('.modal-body')[0];
+
+        if (!modalBody) return;
+
+        // ----------------------------------
+        // 1. Find section headings
+        // ----------------------------------
+
+        const headings = [];
+
+        modalBody.querySelectorAll('*').forEach(el => {
+
+            const text = normalize(el.innerText);
+
+            if (!NORMALIZED_SECTIONS[text]) return;
+
+            // Avoid selecting parent elements when
+            // an exact matching child already exists.
+            const matchingChild = [...el.children].some(child =>
+                normalize(child.innerText) === text
+            );
+
+            if (!matchingChild) {
+                headings.push({
+                    element: el,
+                    section: NORMALIZED_SECTIONS[text]
+                });
+            }
         });
 
-        function matchSection(text) {
-            return NORMALIZED_SECTIONS[normalize(text)] || null;
-        }
+        // ----------------------------------
+        // 2. Process all checkboxes
+        // ----------------------------------
 
-        function fieldMatches(section, label) {
-            if (!section || !SECTION_FIELDS[section]) return false;
-            let normLabel = normalize(label);
-            return SECTION_FIELDS[section].some(f => normalize(f) === normLabel);
-        }
+        const inputs = modalBody.querySelectorAll(
+            'input[type="checkbox"]'
+        );
 
-        function applyDefaults($modal) {
+        inputs.forEach(input => {
+
+            // Find the nearest checkbox row
+            const row = input.closest('.checkbox') ||
+                        input.closest('.form-check') ||
+                        input.parentElement;
+
+            if (!row) return;
+
+            const labelElement = row.querySelector('label');
+
+            if (!labelElement) return;
+
+            const label = normalize(labelElement.innerText);
+
+            // ----------------------------------
+            // 3. Identify checkbox section
+            // ----------------------------------
+
             let currentSection = null;
 
-            $modal.find('.modal-body *').each(function () {
-                let $el = $(this);
+            headings.forEach(heading => {
 
-                // Heading detection
-                if ($el.find('input[type=checkbox]').length === 0
-                    && !$el.hasClass('checkbox')
-                    && $el.parents('.checkbox').length === 0) {
+                const position =
+                    heading.element.compareDocumentPosition(input);
 
-                    let clean = cleanText($el);
-                    let matched = matchSection(clean);
-
-                    if (matched) {
-                        let childAlsoMatches = $el.children().toArray().some(c => {
-                            return matchSection(cleanText($(c)));
-                        });
-                        if (!childAlsoMatches) {
-                            currentSection = matched;
-                            console.log('%c[Section] ->', 'color:blue', currentSection);
-                        }
-                    }
+                // Heading must appear before checkbox
+                if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
+                    currentSection = heading.section;
                 }
 
-                // Checkbox rows
-                if ($el.hasClass('checkbox') && $el.find('input[type=checkbox]').length) {
-                    let label = $el.find('label').text().trim();
-                    let $checkbox = $el.find('input[type=checkbox]');
-
-                    let allowed = fieldMatches(currentSection, label);
-                    let isChecked = $checkbox.prop('checked');
-
-                    console.log('  section:', currentSection, '| label:', JSON.stringify(label), '| allowed:', allowed);
-
-                    if (allowed && !isChecked) {
-                        $checkbox.prop('checked', true).trigger('change');
-                    } else if (!allowed && isChecked && !$checkbox.prop('disabled')) {
-                        $checkbox.prop('checked', false).trigger('change');
-                    }
-                }
-            });
-        }
-
-        $(document).on('shown.bs.modal', '.modal', function () {
-            let $modal = $(this);
-            if ($modal.find('.modal-title').text().trim() !== 'Export Data') return;
-
-            console.log('=== Export Data modal opened, running initial pass ===');
-            applyDefaults($modal);
-
-            const observer = new MutationObserver(() => {
-                console.log('=== DOM changed, re-applying defaults ===');
-                applyDefaults($modal);
             });
 
-            observer.observe($modal.find('.modal-body')[0], {
-                childList: true,
-                subtree: true
-            });
+            if (!currentSection) return;
 
-            $modal.one('hidden.bs.modal', function () {
-                observer.disconnect();
-            });
+            // ----------------------------------
+            // 4. Check only allowed fields
+            // ----------------------------------
+
+            const allowedFields =
+                SECTION_FIELDS[currentSection] || [];
+
+            const allowed = allowedFields.some(field =>
+                normalize(field) === label
+            );
+
+            if (input.checked !== allowed) {
+
+                input.checked = allowed;
+
+                // Notify Frappe
+                input.dispatchEvent(
+                    new Event('change', { bubbles: true })
+                );
+
+                console.log(
+                    currentSection,
+                    label,
+                    allowed ? 'CHECKED' : 'UNCHECKED'
+                );
+            }
+
         });
     }
+
+    // ----------------------------------
+    // 5. Export Data modal
+    // ----------------------------------
+
+    $(document)
+        .off('shown.bs.modal.export_defaults')
+        .on(
+            'shown.bs.modal.export_defaults',
+            '.modal',
+            function () {
+
+                const $modal = $(this);
+
+                if (
+                    $modal.find('.modal-title').text().trim()
+                    !== 'Export Data'
+                ) {
+                    return;
+                }
+
+                console.log('Export Data modal opened');
+
+                applyDefaults($modal);
+
+                // Watch for dynamically loaded fields
+                const modalBody =
+                    $modal.find('.modal-body')[0];
+
+                if (!modalBody) return;
+
+                const observer = new MutationObserver(() => {
+                    applyDefaults($modal);
+                });
+
+                observer.observe(modalBody, {
+                    childList: true,
+                    subtree: true
+                });
+
+                $modal.one('hidden.bs.modal', function () {
+                    observer.disconnect();
+                });
+
+            }
+        );
+
+}
+
 };
